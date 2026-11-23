@@ -1,0 +1,2 @@
+# Conventional Commits: tipo en inglés, descripción en español (CLAUDE.md §5).
+pnpm exec commitlint --edit "$1"
