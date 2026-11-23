@@ -24,7 +24,7 @@
 
 ## FASE 1 — Jugable y robusto
 
-### 🟡 H0 · Cimientos del repositorio
+### ✅ H0 · Cimientos del repositorio
 Monorepo pnpm + Turborepo, paquetes vacíos con su configuración, TS strict, ESLint, Prettier, Husky,
 lint-staged, commitlint, gitleaks, Vitest base y `docker-compose.yml` (Postgres + Redis).
 También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados), README,
@@ -36,7 +36,7 @@ También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados
 - gitleaks bloquea un secreto de prueba (probarlo y revertirlo).
 - Las reglas de dependencias entre paquetes se validan automáticamente.
 
-**Notas de cierre (23/11/2026, pendiente de aprobación)**
+**Notas de cierre (23/11/2026, aprobado por Antonio)**
 - DoD verificada: `pnpm dev` levanta PostgreSQL 18 + Redis 8 y web/api/game responden; lint, typecheck,
   test, build y `pnpm audit` en verde en local y en CI (PR #1); gitleaks bloqueó un token de prueba;
   dependency-cruiser y ESLint rechazaron imports prohibidos y `Math.random` en el motor.
