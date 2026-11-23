@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+pnpm-lock.yaml
+playwright-report/
+test-results/
+
+# La documentación en Markdown se redacta a mano: Prettier no la reformatea.
+*.md

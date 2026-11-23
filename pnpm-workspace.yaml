@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Versiones exactas al añadir dependencias (Dependabot se encarga de subirlas).
+saveExact: true
+
+# Solo estas dependencias pueden ejecutar scripts de instalación.
+# esbuild (lo usa tsx) descarga y verifica su binario nativo.
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,38 @@
+{
+  "name": "31mus",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mus online (8 reyes): monorepo de 31mus.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=26.0.0 <27.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm run infra:up && turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint && pnpm run lint:deps && pnpm run format:check",
+    "lint:deps": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:engine": "turbo run test --filter=@31mus/engine",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@31mus/config": "workspace:*",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "dependency-cruiser": "18.8.0",
+    "eslint": "10.15.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.2",
+    "prettier": "3.10.1",
+    "turbo": "2.11.13",
+    "typescript": "6.0.3"
+  }
+}
