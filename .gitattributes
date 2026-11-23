@@ -1,0 +1,21 @@
+# Normaliza todo el texto a LF en el repositorio y en el working tree,
+# también en Windows (core.autocrlf=false).
+* text=auto eol=lf
+
+# Scripts de PowerShell y de cmd conservan CRLF.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.ogg binary
+*.wav binary

@@ -16,24 +16,15 @@
 | D4 | Mus corrido | No: mus normal desde la primera mano |
 | D5 | Ranking | Modelo PokerArena: **solo la cola clasificatoria 2 vs 2 mueve el ELO**; las salas son casuales. ELO individual, inicial 1200, K=32 (K=40 en las 20 primeras), sobre la media de la pareja rival. Temporadas mensuales con clasificación e insignias (20/11/2026) |
 | D6 | Invitados | Pueden jugar salas casuales (públicas, privadas y contra bots). **No** pueden entrar en la clasificatoria |
+| D7 | Reconexión | El jugador puede recuperar su asiento durante toda la partida; mientras tanto juega un bot |
 | D8 | Estética | Interfaz **oscura** al estilo de usabilidad de Chess.com / Gambit, con identidad propia. Fuente de verdad: archivo de Figma de 31mus (20/11/2026) |
 | D9 | Bots | Bots **con personaje** (nombre, avatar y estilo), todos de dificultad media (20/11/2026) |
-| D7 | Reconexión | El jugador puede recuperar su asiento durante toda la partida; mientras tanto juega un bot |
-
----|---|---|---|
-| D1 | Acción por defecto al agotar el tiempo en el mus y en el descarte | "No hay mus" / descartar 1 carta (la peor) | H1 |
-| D2 | Al rechazar un envite en pares o juego, ¿cobra la pareja que envidó también sus jugadas? | Sí | H1 |
-| D3 | Mínimo de un reenvido | 1 tanto | H1 |
-| D4 | Mus corrido en la primera mano | No | H1 |
-| D5 | Sistema de ranking | ELO individual, K=32 (K=40 en las primeras 20 partidas) | H7 |
-| D6 | ¿Puede un invitado entrar en una sala 2 vs 2 pública? Si entra, esa partida no puntúa para nadie | Sí puede, y no puntúa | H5 |
-| D7 | Ventana de reconexión garantizada | 120 s, y reentrada mientras dure la partida | H3 |
 
 ---
 
 ## FASE 1 — Jugable y robusto
 
-### ⬜ H0 · Cimientos del repositorio
+### 🟡 H0 · Cimientos del repositorio
 Monorepo pnpm + Turborepo, paquetes vacíos con su configuración, TS strict, ESLint, Prettier, Husky,
 lint-staged, commitlint, gitleaks, Vitest base y `docker-compose.yml` (Postgres + Redis).
 También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados), README,
