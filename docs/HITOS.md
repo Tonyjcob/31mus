@@ -36,6 +36,27 @@ También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados
 - gitleaks bloquea un secreto de prueba (probarlo y revertirlo).
 - Las reglas de dependencias entre paquetes se validan automáticamente.
 
+**Notas de cierre (23/11/2026, pendiente de aprobación)**
+- DoD verificada: `pnpm dev` levanta PostgreSQL 18 + Redis 8 y web/api/game responden; lint, typecheck,
+  test, build y `pnpm audit` en verde en local y en CI (PR #1); gitleaks bloqueó un token de prueba;
+  dependency-cruiser y ESLint rechazaron imports prohibidos y `Math.random` en el motor.
+- Decisiones en `docs/adr/ADR-0001-stack.md`. `api` y `game` son `node:http` hasta H6/H3.
+- `/code-review` del PR: 10 hallazgos; 9 corregidos (caché de turbo, entorno de web con Zod,
+  rutas y HEAD en los servidores, cooldown de Dependabot…). El restante queda como deuda (abajo).
+
+**Deuda técnica detectada**
+- TypeScript 7 (nativo) pendiente de que lo soporten typescript-eslint y dependency-cruiser.
+- Logs estructurados con pino (§5): se introducen con NestJS (H6) y Colyseus (H3).
+- PostgreSQL 19: subir cuando Prisma lo soporte (H6).
+- Redis de desarrollo sin contraseña (solo en 127.0.0.1); producción con contraseña en H10.
+- `tsx watch` reinicia api/game una vez al arrancar `pnpm dev` (los paquetes recompilan). Inofensivo.
+- `apps/api/src/server.ts` y `apps/game/src/server.ts` están duplicados. Se acepta porque son
+  provisionales: desaparecen con NestJS (H6) y Colyseus (H3).
+- Comprobar que Dependabot procesa bien el lockfile de pnpm 12 en su primera ejecución.
+- Proteger la rama `main` en GitHub (PR obligatorio + checks de CI).
+- Skills de la §15 no instaladas en esta sesión: `engineering:*` y `design-skills:*`. El ADR-0001 se
+  redactó sin `engineering:architecture`.
+
 ### ⬜ H1 · Motor de reglas (`packages/engine`)
 Cartas, baraja, RNG inyectable, reparto, mus y descartes, rebarajado de descartes, evaluadores
 (grande, chica, pares, juego, punto), declaraciones, máquina de estados de lances, envites
