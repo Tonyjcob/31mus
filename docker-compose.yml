@@ -1,0 +1,42 @@
+# Infraestructura de DESARROLLO: PostgreSQL y Redis.
+# Las apps se ejecutan en el host con `pnpm dev`. Requiere un `.env` (copia de `.env.example`).
+# Los puertos se publican solo en 127.0.0.1.
+name: 31mus
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env (copia .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env (copia .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env (copia .env.example)}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # Desde PostgreSQL 18 los datos viven en /var/lib/postgresql/<versión>/docker.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
