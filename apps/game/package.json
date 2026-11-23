@@ -1,0 +1,26 @@
+{
+  "name": "@31mus/game",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Servidor de juego en tiempo real (Colyseus desde H3).",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file-if-exists=../../.env dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@31mus/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@31mus/config": "workspace:*",
+    "@types/node": "26.6.6",
+    "eslint": "10.15.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.1.1"
+  }
+}

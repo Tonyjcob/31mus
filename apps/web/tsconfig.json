@@ -1,0 +1,4 @@
+{
+  "extends": "@31mus/config/tsconfig/vite.json",
+  "include": ["src"]
+}
