@@ -386,16 +386,48 @@ otra, **pregunta antes**. Si dos skills hacen lo mismo, usa la que indica esta t
   (no escribir en el archivo de Figma: el diseño lo mantiene Antonio).
 - Ninguna skill o plugin que no aparezca en esta sección.
 
-## 16. Comandos (se definen en H0)
+## 16. Comandos
+
+Definidos en H0:
 
 ```bash
 pnpm install
 pnpm dev              # docker compose (postgres, redis) + todas las apps en watch
-pnpm test             # todos los tests
+pnpm test             # todos los tests (el motor exige cobertura ≥ 95 %)
 pnpm test:engine      # solo motor
-pnpm test:e2e         # Playwright
-pnpm lint && pnpm typecheck
-pnpm db:migrate       # prisma migrate dev
-pnpm db:seed
-docker compose -f docker-compose.prod.yml up -d --build
+pnpm lint             # ESLint + reglas de dependencias (lint:deps) + Prettier
+pnpm typecheck
+pnpm build
+pnpm format           # Prettier --write
+pnpm infra:up         # solo PostgreSQL y Redis (docker compose up -d --wait)
+pnpm infra:down
 ```
+
+Se añaden en su hito:
+
+```bash
+pnpm test:e2e         # Playwright (H5)
+pnpm db:migrate       # prisma migrate dev (H6)
+pnpm db:seed          # (H6)
+docker compose -f docker-compose.prod.yml up -d --build   # (H10)
+```
+
+## 17. Desarrollo en Windows
+
+El entorno de desarrollo es **Windows nativo**: PowerShell 7, Docker Desktop (backend WSL2) y Git for Windows.
+
+- **Scripts de `package.json` multiplataforma**: pnpm los ejecuta con `cmd.exe`. Nada de `rm -rf`,
+  `export VAR=…`, `$(…)` ni comillas simples de bash. `&&` sí funciona. Si hace falta lógica,
+  un script de Node en `infra/scripts/`.
+- **Finales de línea**: `.gitattributes` fuerza LF (salvo `*.ps1`, `*.cmd` y `*.bat`, en CRLF). Mantener
+  `core.autocrlf=false`.
+- **Hooks de Husky**: los ejecuta el `sh` de Git for Windows. Escribirlos en sh POSIX.
+- **gitleaks** es obligatorio en local (`winget install --id Gitleaks.Gitleaks`). Sin él, el pre-commit falla.
+- **Docker Desktop debe estar arrancado** antes de `pnpm dev` o `pnpm infra:up`. Los puertos se publican
+  solo en `127.0.0.1`.
+- **`.env`**: `Copy-Item .env.example .env`. `docker compose` falla con un mensaje claro si faltan variables.
+- **Las apps escuchan en `127.0.0.1`** por defecto, para que no salte el Firewall de Windows. En contenedores, `HOST=0.0.0.0`.
+- **Puerto ocupado** tras cerrar `pnpm dev` a la fuerza:
+  `Get-NetTCPConnection -LocalPort 3000 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess }`.
+- **Telemetría de Turborepo** (anónima): se desactiva con `pnpm exec turbo telemetry disable`. En CI ya está desactivada.
+- Rutas en código y configuración siempre con `/` o `path`/`URL`, nunca `\` a mano.
