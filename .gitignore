@@ -1,0 +1,50 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Salidas de build y caché
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+.vite/
+coverage/
+
+# Variables de entorno (solo se versiona el ejemplo)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Tests e2e
+playwright-report/
+test-results/
+blob-report/
+
+# Volúmenes locales de Docker
+.docker-data/
+infra/docker/data/
+
+# Claves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores (se permiten configs compartidas de VS Code)
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Claude Code (configuración local)
+.claude/settings.local.json

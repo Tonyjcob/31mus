@@ -1,0 +1,36 @@
+{
+  "name": "@31mus/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Configuración compartida: tsconfig, ESLint, Prettier y Vitest.",
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/library.json": "./tsconfig/library.json",
+    "./tsconfig/node.json": "./tsconfig/node.json",
+    "./tsconfig/vite.json": "./tsconfig/vite.json",
+    "./eslint": "./eslint/index.js",
+    "./prettier": "./prettier/index.js",
+    "./vitest": "./vitest/index.js"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings=0"
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.14.0",
+    "typescript-eslint": "8.73.0"
+  },
+  "devDependencies": {
+    "eslint": "10.15.0",
+    "vitest": "5.1.1"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "~6.0.0",
+    "vitest": "^5.0.0"
+  }
+}

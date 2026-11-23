@@ -16,24 +16,15 @@
 | D4 | Mus corrido | No: mus normal desde la primera mano |
 | D5 | Ranking | Modelo PokerArena: **solo la cola clasificatoria 2 vs 2 mueve el ELO**; las salas son casuales. ELO individual, inicial 1200, K=32 (K=40 en las 20 primeras), sobre la media de la pareja rival. Temporadas mensuales con clasificación e insignias (20/11/2026) |
 | D6 | Invitados | Pueden jugar salas casuales (públicas, privadas y contra bots). **No** pueden entrar en la clasificatoria |
+| D7 | Reconexión | El jugador puede recuperar su asiento durante toda la partida; mientras tanto juega un bot |
 | D8 | Estética | Interfaz **oscura** al estilo de usabilidad de Chess.com / Gambit, con identidad propia. Fuente de verdad: archivo de Figma de 31mus (20/11/2026) |
 | D9 | Bots | Bots **con personaje** (nombre, avatar y estilo), todos de dificultad media (20/11/2026) |
-| D7 | Reconexión | El jugador puede recuperar su asiento durante toda la partida; mientras tanto juega un bot |
-
----|---|---|---|
-| D1 | Acción por defecto al agotar el tiempo en el mus y en el descarte | "No hay mus" / descartar 1 carta (la peor) | H1 |
-| D2 | Al rechazar un envite en pares o juego, ¿cobra la pareja que envidó también sus jugadas? | Sí | H1 |
-| D3 | Mínimo de un reenvido | 1 tanto | H1 |
-| D4 | Mus corrido en la primera mano | No | H1 |
-| D5 | Sistema de ranking | ELO individual, K=32 (K=40 en las primeras 20 partidas) | H7 |
-| D6 | ¿Puede un invitado entrar en una sala 2 vs 2 pública? Si entra, esa partida no puntúa para nadie | Sí puede, y no puntúa | H5 |
-| D7 | Ventana de reconexión garantizada | 120 s, y reentrada mientras dure la partida | H3 |
 
 ---
 
 ## FASE 1 — Jugable y robusto
 
-### ⬜ H0 · Cimientos del repositorio
+### ✅ H0 · Cimientos del repositorio
 Monorepo pnpm + Turborepo, paquetes vacíos con su configuración, TS strict, ESLint, Prettier, Husky,
 lint-staged, commitlint, gitleaks, Vitest base y `docker-compose.yml` (Postgres + Redis).
 También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados), README,
@@ -44,6 +35,27 @@ También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados
 - `pnpm lint`, `pnpm typecheck` y `pnpm test` pasan en local y en CI.
 - gitleaks bloquea un secreto de prueba (probarlo y revertirlo).
 - Las reglas de dependencias entre paquetes se validan automáticamente.
+
+**Notas de cierre (23/11/2026, aprobado por Antonio)**
+- DoD verificada: `pnpm dev` levanta PostgreSQL 18 + Redis 8 y web/api/game responden; lint, typecheck,
+  test, build y `pnpm audit` en verde en local y en CI (PR #1); gitleaks bloqueó un token de prueba;
+  dependency-cruiser y ESLint rechazaron imports prohibidos y `Math.random` en el motor.
+- Decisiones en `docs/adr/ADR-0001-stack.md`. `api` y `game` son `node:http` hasta H6/H3.
+- `/code-review` del PR: 10 hallazgos; 9 corregidos (caché de turbo, entorno de web con Zod,
+  rutas y HEAD en los servidores, cooldown de Dependabot…). El restante queda como deuda (abajo).
+
+**Deuda técnica detectada**
+- TypeScript 7 (nativo) pendiente de que lo soporten typescript-eslint y dependency-cruiser.
+- Logs estructurados con pino (§5): se introducen con NestJS (H6) y Colyseus (H3).
+- PostgreSQL 19: subir cuando Prisma lo soporte (H6).
+- Redis de desarrollo sin contraseña (solo en 127.0.0.1); producción con contraseña en H10.
+- `tsx watch` reinicia api/game una vez al arrancar `pnpm dev` (los paquetes recompilan). Inofensivo.
+- `apps/api/src/server.ts` y `apps/game/src/server.ts` están duplicados. Se acepta porque son
+  provisionales: desaparecen con NestJS (H6) y Colyseus (H3).
+- Comprobar que Dependabot procesa bien el lockfile de pnpm 12 en su primera ejecución.
+- Proteger la rama `main` en GitHub (PR obligatorio + checks de CI).
+- Skills de la §15 no instaladas en esta sesión: `engineering:*` y `design-skills:*`. El ADR-0001 se
+  redactó sin `engineering:architecture`.
 
 ### ⬜ H1 · Motor de reglas (`packages/engine`)
 Cartas, baraja, RNG inyectable, reparto, mus y descartes, rebarajado de descartes, evaluadores

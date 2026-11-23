@@ -1,0 +1,42 @@
+# Dependabot semanal (CLAUDE.md §11). Espera 7 días desde la publicación de cada versión.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore(deps)
+    ignore:
+      # TypeScript 7 (compilador nativo) aún no es compatible con typescript-eslint
+      # ni dependency-cruiser. Ver docs/adr/ADR-0001-stack.md.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+    groups:
+      herramientas:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore(ci)
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore(infra)
