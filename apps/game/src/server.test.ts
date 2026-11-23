@@ -38,13 +38,25 @@ describe('servidor game', () => {
     expect(await res.json()).toEqual({ status: 'ok', service: 'game' });
   });
 
+  it('ignora la query string en el healthcheck', async () => {
+    const res = await fetch(`${baseUrl}/health?probe=1`);
+    expect(res.status).toBe(200);
+  });
+
+  it('responde a HEAD sin cuerpo', async () => {
+    const res = await fetch(`${baseUrl}/health`, { method: 'HEAD' });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe('');
+  });
+
   it('devuelve 404 en rutas desconocidas', async () => {
     const res = await fetch(`${baseUrl}/no-existe`);
     expect(res.status).toBe(404);
   });
 
-  it('rechaza métodos distintos de GET', async () => {
+  it('rechaza métodos distintos de GET y HEAD con la cabecera Allow', async () => {
     const res = await fetch(`${baseUrl}/health`, { method: 'POST' });
     expect(res.status).toBe(405);
+    expect(res.headers.get('allow')).toBe('GET, HEAD');
   });
 });
