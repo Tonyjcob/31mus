@@ -244,5 +244,5 @@ decisión) y a cambio elimina la clase de bug «el bot o la UI ofrecen algo que 
 2. [x] Permitir `node:fs`, `node:path` y `node:url` solo en tests y `src/testing/` de los perfiles puros. Los tipos de Node están en el `tsconfig.json` del motor; `tsconfig.build.json` los quita, así que el build falla si el código de producción los usa.
 3. [x] Añadir fast-check 4.10.2 como devDependency del motor.
 4. [x] Implementar los módulos de la §9 con sus tests (más `actions`, `step`, `state`, `invariant` y `testing/`).
-5. [ ] Redactar `docs/engine/CASOS_EVALUACION.md` (hecho, 62 casos) y que Antonio lo revise.
-6. [ ] Al cerrar H1: reflejar la API en `docs/ARQUITECTURA.md`.
+5. [x] Redactar `docs/engine/CASOS_EVALUACION.md` (62 casos; revisado por Antonio el 24/11/2026).
+6. [x] Al cerrar H1: reflejar la API en `docs/ARQUITECTURA.md`.

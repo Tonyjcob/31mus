@@ -2,7 +2,7 @@
 
 > Fuente de verdad que lee el test `packages/engine/src/evaluators/casos-evaluacion.test.ts`
 > (ADR-0002 §10). Cada fila es una mano de 4 jugadores y el resultado que exige REGLAS_MUS.md.
-> **Revisada por:** _pendiente de Antonio_.
+> **Revisada por:** Antonio, 24/11/2026.
 
 ## Cómo leer la tabla
 
