@@ -1,4 +1,4 @@
-import { BOT_PERSONAS } from '@31mus/bots';
+import { BOT_PERSONAS, NEUTRAL_PERSONA } from '@31mus/bots';
 import { createSeededRng, type Seat } from '@31mus/engine';
 import { describe, expect, it } from 'vitest';
 
@@ -44,6 +44,19 @@ describe('Lobby · solo', () => {
       expect(ids[1]).toBe('rosario');
       expect(new Set(ids).size).toBe(3);
     }
+  });
+
+  it('el neutro no sale por sorteo, pero se puede elegir (D22)', () => {
+    for (let seed = 0; seed < 50; seed++) {
+      const lobby = new Lobby('solo');
+      lobby.takeSeat('u1', 'Ana', 0);
+      lobby.start({ partner: 'abuelo' }, createSeededRng(seed));
+      expect(lobby.occupants.map(personaOf)).not.toContain(NEUTRAL_PERSONA.id);
+    }
+    const lobby = new Lobby('solo');
+    lobby.takeSeat('u1', 'Ana', 0);
+    expect(lobby.start({ rivals: ['neutro', 'pollo'] }, rng())).toBeNull();
+    expect(personaOf(lobby.occupant(1))).toBe('neutro');
   });
 
   it('rechaza un personaje que no existe', () => {
@@ -136,6 +149,6 @@ describe('Lobby · durante la partida', () => {
   });
 });
 
-it('el catálogo tiene personajes suficientes para tres bots', () => {
-  expect(BOT_PERSONAS.length).toBeGreaterThanOrEqual(3);
+it('el catálogo tiene personajes con nombre suficientes para tres bots', () => {
+  expect(BOT_PERSONAS.filter((p) => p.id !== NEUTRAL_PERSONA.id).length).toBeGreaterThanOrEqual(3);
 });

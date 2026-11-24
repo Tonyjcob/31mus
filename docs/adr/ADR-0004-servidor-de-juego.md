@@ -146,8 +146,8 @@ interface MatchLogStore {
   `duo_vs_bots` los dos humanos van en la misma pareja (0/2 o 1/3). La partida empieza cuando están
   todos los humanos que pide el modo (§7); en `solo`, al entrar (el creador se sienta en el 0). Antes
   de empezar se puede cambiar de asiento. Los personajes rivales (y el compañero en `solo`) se eligen
-  **al crear la sala**, porque en `solo` no hay lobby; los que no se eligen se sortean del catálogo,
-  sin repetir personaje en la mesa.
+  **al crear la sala**, porque en `solo` no hay lobby; los que no se eligen se sortean entre los 4
+  personajes con nombre (el neutro no sale por sorteo, D22), sin repetir personaje en la mesa.
 - **Acciones.** El cliente envía `{ actionId, version, action }`. El servidor rechaza: asiento que no
   está en `pendingSeats`, acción que no está en `getLegalActions` (se compara con `sameAction`),
   `version` distinta de la actual (acción pensada sobre un estado viejo) y `actionId` repetido. Un

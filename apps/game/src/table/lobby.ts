@@ -1,6 +1,6 @@
 // Asientos de una mesa y reglas de inicio por modo (CLAUDE.md §7, ADR-0004 §5). Sin Colyseus:
 // la sala traduce mensajes a estas operaciones y refleja el resultado en su estado público.
-import { BOT_PERSONAS, type BotPersona } from '@31mus/bots';
+import { BOT_PERSONAS, NEUTRAL_PERSONA, type BotPersona } from '@31mus/bots';
 import { SEATS, partnerOf, teamOf, type PerSeat, type Rng, type Seat } from '@31mus/engine';
 import type { BotChoice, RoomErrorCode, RoomMode } from '@31mus/shared';
 
@@ -89,7 +89,9 @@ export class Lobby {
 
   /**
    * Empieza: los asientos libres pasan a bots con los personajes elegidos y el resto sorteado, sin
-   * repetir personaje en la mesa. Devuelve `UNKNOWN_PERSONA` si se eligió uno que no existe.
+   * repetir personaje en la mesa. El sorteo es solo entre los personajes con nombre: el neutro
+   * («Bot») se puede elegir, pero no sale por sorteo (D22). Devuelve `UNKNOWN_PERSONA` si se eligió
+   * uno que no existe.
    */
   start(choice: BotChoice, rng: Rng): LobbyResult {
     if (!this.isReady()) return 'NOT_IN_LOBBY';
@@ -97,7 +99,9 @@ export class Lobby {
     const chosen = [...plan.values()].filter((id): id is string => id !== undefined);
     const personas = chosen.map((id) => BOT_PERSONAS.find((persona) => persona.id === id));
     if (personas.includes(undefined)) return 'UNKNOWN_PERSONA';
-    const pool = BOT_PERSONAS.filter((persona) => !chosen.includes(persona.id));
+    const pool = BOT_PERSONAS.filter(
+      (persona) => persona.id !== NEUTRAL_PERSONA.id && !chosen.includes(persona.id),
+    );
     for (const [seat, id] of plan) {
       const persona =
         BOT_PERSONAS.find((candidate) => candidate.id === id) ??

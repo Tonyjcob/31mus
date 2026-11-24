@@ -8,7 +8,7 @@
 
 ## Decisiones de producto
 
-D1–D9 confirmadas el 19 y el 20/11/2026; D10–D16, el 23/11/2026; D17–D21, el 24/11/2026. Criterio para las reglas: **reglamentos
+D1–D9 confirmadas el 19 y el 20/11/2026; D10–D16, el 23/11/2026; D17–D22, el 24/11/2026. Criterio para las reglas: **reglamentos
 oficiales** (FEM y La Federación; Las40 como referencia online), no costumbres de mesa.
 
 | # | Decisión | Resuelto |
@@ -34,6 +34,7 @@ oficiales** (FEM y La Federación; Las40 como referencia online), no costumbres 
 | D19 | Pausa entre manos | La siguiente mano empieza sola a los 8 s, sin botón «listo» |
 | D20 | Sala sin humanos conectados | La partida se pausa; si nadie vuelve en 10 min, se cierra y se guarda como abandonada. Con al menos un humano, los bots juegan por los ausentes (D7) |
 | D21 | Chat, reacciones y salas privadas | Reacciones 👏 😂 😮 😡 🔥 👍 👎 🤔; chat 5 mensajes / 10 s; reacciones 3 / 5 s; código de 6 caracteres sin 0/O/1/I/L; 5 intentos fallidos por minuto |
+| D22 | Personajes sorteados | Los bots que no se eligen se sortean solo entre los 4 personajes con nombre. El neutro («Bot») se puede elegir, pero no sale por sorteo: es el que sustituye a quien se va (D7) |
 
 ---
 
@@ -158,7 +159,7 @@ para los tests y un retardo "humano" configurable (1–3 s; lo aplica el servido
 `MusRoom` en Colyseus, con los modos `solo`, `duo_vs_bots` y `2v2`. Asientos, inicio cuando se llenan,
 temporizador de 30 s con `deadline` y bots que sustituyen a quien se va. Reconexión con recuperación
 del asiento, espectadores (máximo 5), chat común y reacciones con rate-limit, salas privadas con
-código, idempotencia de acciones y persistencia del log de cada mano. Aplica D7 y D17–D21.
+código, idempotencia de acciones y persistencia del log de cada mano. Aplica D7 y D17–D22.
 Diseño en `docs/adr/ADR-0004-servidor-de-juego.md` (aceptado el 24/11/2026).
 
 **DoD**
