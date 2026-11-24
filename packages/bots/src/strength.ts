@@ -15,7 +15,7 @@ import {
   juegoKey,
   paresKey,
 } from '@31mus/engine';
-import type { Card, Lance } from '@31mus/engine';
+import type { Card, Lance, MusRank } from '@31mus/engine';
 
 import { HAND_COMBOS, comboKey, handRanks, representativeHand } from './combos.js';
 
@@ -89,7 +89,12 @@ const TABLES: Readonly<Record<Lance, LanceTable>> = {
  * si la mano no lo juega (pares sin pares, juego sin juego, punto con juego).
  */
 export function lanceStats(lance: Lance, hand: readonly Card[]): LanceStats | null {
-  return TABLES[lance].stats.get(comboKey(handRanks(hand))) ?? null;
+  return lanceStatsOf(lance, handRanks(hand));
+}
+
+/** Como `lanceStats`, a partir de las cuatro figuras de la mano. */
+export function lanceStatsOf(lance: Lance, ranks: readonly MusRank[]): LanceStats | null {
+  return TABLES[lance].stats.get(comboKey(ranks)) ?? null;
 }
 
 /** Fracción de todas las manos que juegan `lance` (en pares, las que tienen pares…). */

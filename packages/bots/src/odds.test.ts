@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { ANY_HAND, edge, teamWin, tieShare } from './odds.js';
+import { ANY_HAND, edge, teamWin, tieShare, winProbability } from './odds.js';
 
 describe('tieShare', () => {
   it('la mano gana todos los empates, el postre ninguno, el 2.º y el 3.º la mitad', () => {
@@ -52,5 +52,26 @@ describe('teamWin', () => {
         expect(teamWin(Math.min(1, x + 0.1), { low, high }, n)).toBeGreaterThanOrEqual(p - 1e-12);
       }),
     );
+  });
+});
+
+describe('winProbability', () => {
+  const unit = fc.double({ min: 0, max: 1, noNaN: true });
+
+  it('con rivales cualquiera coincide con teamWin', () => {
+    fc.assert(
+      fc.property(unit, fc.integer({ min: 0, max: 2 }), (u, n) => {
+        const rivals = Array.from({ length: n }, () => ANY_HAND);
+        expect(winProbability(u, ANY_HAND, rivals)).toBeCloseTo(teamWin(u, ANY_HAND, n), 3);
+        expect(winProbability(u, null, rivals)).toBeCloseTo(teamWin(u, null, n), 10);
+      }),
+    );
+  });
+
+  it('un rival que envidó (mano buena) baja la probabilidad', () => {
+    const strong = { low: 0.5, high: 1 };
+    expect(winProbability(0.6, null, [strong, ANY_HAND])).toBeLessThan(teamWin(0.6, null, 2));
+    expect(winProbability(0.4, null, [strong])).toBe(0);
+    expect(winProbability(0.2, { low: 0.9, high: 0.9 }, [strong])).toBeCloseTo(0.8, 10);
   });
 });

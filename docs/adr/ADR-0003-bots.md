@@ -42,7 +42,7 @@ interface BotInput {
 
 interface BotDecision {
   readonly action: Action;
-  /** `true` si es un envite o un «quiero» con mano floja: sirve para medir los faroles. */
+  /** `true` si es un envite, una subida o un órdago con mano floja: sirve para medir los faroles. */
   readonly bluff: boolean;
 }
 
@@ -204,9 +204,9 @@ rival en profundidad) que se puede afinar sin cambiar la API.
 1. [x] Antonio acepta este ADR (24/11/2026).
 2. [x] Actualizar CLAUDE.md §9 (simulaciones en dos niveles) y añadir `BOT_DELAY_MIN_MS` y
        `BOT_DELAY_MAX_MS` a `shared`.
-3. [ ] Tablas de fuerza con sus tests.
-4. [ ] Bot aleatorio y arnés de simulación.
-5. [ ] Bot medio: mus, descarte, envites, respuestas, faroles y marcador.
-6. [ ] Catálogo de personajes.
+3. [x] Tablas de fuerza con sus tests.
+4. [x] Bot aleatorio y arnés de simulación.
+5. [x] Bot medio: mus, descarte, envites, respuestas, faroles y marcador.
+6. [x] Catálogo de personajes.
 7. [ ] Configuración `sim`, ejecución de la DoD y `docs/bots/MEDICIONES.md`.
 8. [ ] Al cerrar H2: reflejar la API en `docs/ARQUITECTURA.md`.
