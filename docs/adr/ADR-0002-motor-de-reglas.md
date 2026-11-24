@@ -241,8 +241,8 @@ decisión) y a cambio elimina la clase de bug «el bot o la UI ofrecen algo que 
 ## Tareas
 
 1. [x] Actualizar CLAUDE.md §5 y §6 (constantes de reglas en el motor; `startNextHand` y `getEventView`).
-2. [ ] Permitir `node:fs` y `node:path` solo en `*.test.ts` del perfil `pure`.
-3. [ ] Añadir fast-check 4.10.2 como devDependency del motor.
+2. [x] Permitir `node:fs`, `node:path` y `node:url` solo en tests y `src/testing/` de los perfiles puros. Los tipos de Node están en el `tsconfig.json` del motor; `tsconfig.build.json` los quita, así que el build falla si el código de producción los usa.
+3. [x] Añadir fast-check 4.10.2 como devDependency del motor.
 4. [ ] Implementar los módulos de la §9 con sus tests.
 5. [ ] Redactar `docs/engine/CASOS_EVALUACION.md` y pasarlo a Antonio para revisión.
 6. [ ] Al cerrar H1: reflejar la API en `docs/ARQUITECTURA.md`.
