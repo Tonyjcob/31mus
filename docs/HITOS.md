@@ -6,12 +6,15 @@
 
 ---
 
-## Decisiones de producto (confirmadas el 19/11/2026)
+## Decisiones de producto
+
+D1–D9 confirmadas el 19 y el 20/11/2026; D10–D16, el 23/11/2026. Criterio para las reglas: **reglamentos
+oficiales** (FEM y La Federación; Las40 como referencia online), no costumbres de mesa.
 
 | # | Decisión | Resuelto |
 |---|---|---|
-| D1 | Tiempo agotado en el mus o en el descarte | "No hay mus" / descartar 1 carta (la peor según el bot) |
-| D2 | "No quiero" en pares o juego | La pareja que envidó cobra el deje **y** sus jugadas en el recuento |
+| D1 | Tiempo agotado en el mus o en el descarte | "Corto" / descartar 1 carta (cuál, en D15) |
+| D2 | "No quiero" en pares o juego | La pareja que envidó cobra la negada o el deje **y** sus jugadas en el recuento |
 | D3 | Mínimo de un reenvido | 1 tanto |
 | D4 | Mus corrido | No: mus normal desde la primera mano |
 | D5 | Ranking | Modelo PokerArena: **solo la cola clasificatoria 2 vs 2 mueve el ELO**; las salas son casuales. ELO individual, inicial 1200, K=32 (K=40 en las 20 primeras), sobre la media de la pareja rival. Temporadas mensuales con clasificación e insignias (20/11/2026) |
@@ -19,6 +22,13 @@
 | D7 | Reconexión | El jugador puede recuperar su asiento durante toda la partida; mientras tanto juega un bot |
 | D8 | Estética | Interfaz **oscura** al estilo de usabilidad de Chess.com / Gambit, con identidad propia. Fuente de verdad: archivo de Figma de 31mus (20/11/2026) |
 | D9 | Bots | Bots **con personaje** (nombre, avatar y estilo), todos de dificultad media (20/11/2026) |
+| D10 | Rebarajado de descartes | Se reparte lo que quede del mazo y después se barajan **todos** los descartes, también los de esa ronda. Durante la decisión de mus, si el mazo tiene **menos de 16 cartas**, se avisa a toda la mesa ("puede que se barajen los descartes"); el aviso desaparece al rebarajar o al cortar |
+| D11 | Fase de mus | Secuencial: mano → 2.º → 3.º → postre; cada uno dice "mus" o "corto" y **cualquiera puede cortar** (FEM V.4). Tras cortar, la grande empieza **siempre por la mano**. Atajo de UI "Corto y envido" solo para la mano |
+| D12 | Respuesta a un envite (FEM VI.2–4) | Responde el siguiente rival y **su compañero habla siempre después**, salvo que el primero haya subido u ordagado; puede querer, subir u ordagar aunque el primero haya querido. Prioridad: subida u órdago > quiero > no quiero. El compañero de quien envidó no puede subir hasta que suban los rivales. Tiempo agotado del segundo rival = se mantiene la respuesta de su compañero |
+| D13 | Envite rechazado | En grande, chica y punto **solo se cobra lo rechazado** (en pares y juego, D2). Nombres: **negada** = el tanto por rechazar la primera apuesta del lance; **deje** = lo cobrado al rechazar una subida |
+| D14 | Apuesta máxima | **40 tantos** en total por lance; para más, órdago |
+| D15 | Descarte por tiempo agotado | La primera carta que **no forme pareja** en el orden 4, 5, 6, 7, S, C, A, R; si todas forman jugada, la primera en ese mismo orden |
+| D16 | Fin de mano | **Los cuatro enseñan todas sus cartas** (LaFed art. 69), también con órdago aceptado. Grande y chica en paso: 1 tanto al ganador en el recuento |
 
 ---
 
@@ -57,15 +67,15 @@ También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados
 - Skills de la §15 no instaladas en esta sesión: `engineering:*` y `design-skills:*`. El ADR-0001 se
   redactó sin `engineering:architecture`.
 
-### ⬜ H1 · Motor de reglas (`packages/engine`)
+### 🟡 H1 · Motor de reglas (`packages/engine`)
 Cartas, baraja, RNG inyectable, reparto, mus y descartes, rebarajado de descartes, evaluadores
 (grande, chica, pares, juego, punto), declaraciones, máquina de estados de lances, envites
-(envido, envido N, reenvido, quiero, no quiero, órdago y deje), recuento ordenado con corte a 40,
+(envido, envido N, reenvido, quiero, no quiero, órdago, negada y deje), recuento ordenado con corte a 40,
 juegos al mejor de 3, rotación de la mano, `getLegalActions`, `getView` (filtrado),
 `getTimeoutAction` y log de eventos.
 
 **DoD**
-- Implementa todo `REGLAS_MUS.md`, según las decisiones D1–D4.
+- Implementa todo `REGLAS_MUS.md`, según las decisiones D1–D4 y D10–D16.
 - Cobertura ≥ 95 % y tests de propiedades de los invariantes (`CLAUDE.md` §9).
 - 1.000 partidas completas con jugadores aleatorios terminan sin errores.
 - Una tabla de casos de evaluación (≥ 60 manos) revisada por Antonio.
