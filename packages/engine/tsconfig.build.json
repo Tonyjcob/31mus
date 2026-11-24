@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["src/**/*.test.ts"]
+  "compilerOptions": {
+    // Sin tipos de Node: el motor es puro (ADR-0002). Si el código de producción usa algo
+    // de Node, el build falla.
+    "types": []
+  },
+  "exclude": ["src/**/*.test.ts", "src/testing"]
 }

@@ -7,6 +7,8 @@
 
 const SRC = (name) => `^${name}/src/`;
 const WORKSPACE = '^(apps|packages)/';
+/** Tests y sus helpers (`src/testing/`, fuera del build): pueden usar devDependencies y fs. */
+const TEST_FILES = '(\\.test\\.tsx?$|/src/testing/)';
 
 /** @param {string} from @param {string[]} allowed @param {string} comment */
 function onlyMayDependOn(name, from, allowed, comment) {
@@ -81,7 +83,7 @@ module.exports = {
       severity: 'error',
       from: {
         path: '^packages/(engine|bots|shared|design-tokens)/src/',
-        pathNot: '\\.test\\.tsx?$',
+        pathNot: TEST_FILES,
       },
       to: { dependencyTypes: ['core'] },
     },
@@ -111,7 +113,7 @@ module.exports = {
       name: 'src-sin-devdependencies',
       comment: 'El código de producción no importa devDependencies (salvo tipos).',
       severity: 'error',
-      from: { path: '^(apps|packages)/[^/]+/src/', pathNot: '\\.test\\.tsx?$' },
+      from: { path: '^(apps|packages)/[^/]+/src/', pathNot: TEST_FILES },
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'] },
     },
   ],

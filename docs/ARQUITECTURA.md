@@ -1,7 +1,7 @@
 # Arquitectura de 31mus
 
 > Documento vivo: se actualiza al cerrar cada hito (CLAUDE.md §14).
-> Las decisiones de detalle están en `docs/adr/`. Última actualización: H0 (23/11/2026).
+> Las decisiones de detalle están en `docs/adr/`. Última actualización: H1 (24/11/2026).
 
 ## 1. Visión general
 
@@ -23,7 +23,7 @@
 
 | Ruta | Rol | Estado |
 |---|---|---|
-| `packages/engine` | Reglas del mus, puras y deterministas | H0: `Seat`, `nextSeat`, `partnerOf` |
+| `packages/engine` | Reglas del mus, puras y deterministas | Completo (H1, §7) |
 | `packages/bots` | IA de bots y personajes | Vacío (H2) |
 | `packages/shared` | Constantes, esquemas Zod, mensajes cliente↔servidor | Constantes y `parseEnv` |
 | `packages/design-tokens` | Tokens volcados de Figma | Vacío (H4) |
@@ -75,3 +75,41 @@ Producción (`docker-compose.prod.yml` + Caddy) se define en H10.
 - **CI** (GitHub Actions): lint → typecheck → test (cobertura del motor ≥ 95 %) → build →
   `pnpm audit`; gitleaks sobre todo el historial.
 - **Dependabot** semanal: npm, GitHub Actions y docker-compose.
+
+## 7. Motor de reglas (`packages/engine`)
+
+Diseño en `docs/adr/ADR-0002-motor-de-reglas.md`; reglas en `docs/REGLAS_MUS.md` (D1–D4, D10–D17).
+
+**Modelo.** `MatchState` es JSON inmutable: marcador, juegos ganados, mano actual y una `Phase` por
+unión discriminada (`mus` → `discard` → `mus` … → `lance` × 4 → `handOver`). Cada transición es una
+función pura que devuelve un `Step` (`{ state, events }`). El azar entra por un `Rng` inyectado; la
+semilla nunca está en el estado.
+
+**API pública** (`src/index.ts`):
+
+| Función | Qué hace |
+|---|---|
+| `createMatch(config, rng)` | Sortea la primera mano (o usa `firstMano`) y reparte |
+| `getLegalActions(state, seat)` | Acciones legales de un asiento; única fuente de verdad de la legalidad |
+| `pendingSeats(state)` | Asientos a los que se espera (los cuatro en el descarte, que es simultáneo) |
+| `applyAction(state, seat, action, { rng })` | `Result<Step, MusError>`: `NOT_YOUR_TURN`, `ILLEGAL_ACTION`, `MATCH_OVER` |
+| `startNextHand(state, { rng })` | Tras `handOver`: rota la mano, reparte y, si se ganó un juego, pone los tantos a 0 |
+| `getTimeoutAction(state, seat)` | Acción por tiempo agotado (D1, D12, D15) o `null` |
+| `getView(state, viewer)` | Lo que puede ver un jugador o espectador (§9 de las reglas, D17) |
+| `getEventView(event, viewer)` | Filtra cada evento; **todo evento sale del servidor por aquí** |
+
+También exporta los evaluadores (`compareGrande`, `comparePares`, `juegoKey`…), las constantes de
+reglas (`src/rules.ts`) y `createSeededRng` (xoshiro128\*\*) para tests y simulaciones.
+
+**Módulos.** `cards`, `deck` (reparto, reposición y rebarajado D10), `evaluators/` (los cinco lances),
+`phases/` (mus, descarte, lances, envites D12–D14, órdago, recuento con corte a 40), `legal-actions`,
+`apply-action`, `match`, `timeout`, `view` y `events`. `src/testing/` contiene notación de cartas,
+escenarios y el jugador aleatorio; no se compila ni cuenta para la cobertura.
+
+**Pruebas.** Tests unitarios por módulo, la tabla de 62 casos de `docs/engine/CASOS_EVALUACION.md`,
+tests de propiedades con fast-check (cartas, tantos, turnos, fugas de información, inmutabilidad,
+serialización JSON) y 1.000 partidas aleatorias completas. Cobertura del 100 %.
+
+**Pendiente para el servidor (H3).** El `Rng` de producción con `crypto.randomInt` vive en
+`apps/game`, no en el motor; el temporizador de turno y la pausa para mostrar las cartas al final de
+la mano también los decide el servidor.

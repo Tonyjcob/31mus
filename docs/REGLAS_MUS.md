@@ -1,7 +1,8 @@
 # Reglas del mus — especificación de 31mus
 
 > Fuente de verdad para `packages/engine`. Cada regla debe tener al menos un test.
-> Todas las decisiones están confirmadas por Antonio (D1–D4, 19/11/2026). Si aparece una ambigüedad nueva, parar y preguntar.
+> Todas las decisiones están confirmadas por Antonio (D1–D4, 19/11/2026; D10–D16, 23/11/2026; D17, 24/11/2026; ver `HITOS.md`).
+> Criterio: **reglamentos oficiales** (FEM y La Federación). Si aparece una ambigüedad nueva, parar y preguntar.
 
 ## 1. Configuración
 
@@ -35,13 +36,19 @@
 
 ## 3. Reparto y mus
 1. Se baraja (Fisher–Yates con RNG criptográfico) y se reparten 4 cartas a cada jugador.
-2. **Fase de mus**: empezando por la mano, cada jugador dice **"mus"** o **"no hay mus"**.
-   - Si alguien dice "no hay mus", la fase se corta y se juegan los lances con las cartas actuales.
+2. **Fase de mus** (D11): hablan por turno, **mano → 2.º → 3.º → postre**. Cada jugador dice **"mus"** o **"corto"**.
+   - **Cualquiera puede cortar** (FEM V.4). Si alguien dice "corto", la fase termina y se juegan los lances
+     con las cartas actuales. La grande empieza **siempre por la mano**, corte quien corte.
    - Si los cuatro dicen "mus", hay **descarte**: cada jugador descarta **de 1 a 4 cartas**.
      Los descartes se eligen en paralelo con un único plazo de 30 s y se revelan a la vez.
    - Después se reponen las cartas por orden desde la mano y se vuelve a la fase de mus.
-3. El mus es **ilimitado**. Si el mazo no tiene cartas suficientes para reponer, se barajan **todos los
-   descartes acumulados** (no las manos) y forman el nuevo mazo.
+   - Atajo de interfaz **"Corto y envido"**: solo para la mano (es quien abre la grande). El motor lo trata
+     como dos acciones seguidas: "corto" y el envite en grande.
+3. El mus es **ilimitado**. **Rebarajado** (D10): si el mazo no tiene cartas suficientes para reponer, primero
+   se reparte lo que quede del mazo, por orden desde la mano; después se barajan **todos los descartes**
+   (también los de esa misma ronda; nunca las manos) y se sigue reponiendo con ellos.
+   - **Aviso**: durante la decisión de mus, si el mazo tiene **menos de 16 cartas**, toda la mesa ve el aviso
+     "puede que se barajen los descartes". Desaparece al rebarajar o cuando alguien corta.
 4. **Sin mus corrido**: desde la primera mano se juega con mus normal.
 
 ## 4. Lances
@@ -87,7 +94,8 @@ Solo si **nadie** tiene juego. Gana la suma más alta (máximo 30). Vale **1 tan
 Hablan todos los jugadores.
 
 ## 5. Envites
-En cada lance con envites, el turno de palabra empieza por la mano y sigue el orden de juego.
+En cada lance con envites, el turno de palabra empieza por la mano y sigue el orden de juego
+(en pares y juego, solo entre los jugadores que tienen jugada).
 
 Acciones del jugador que tiene la palabra, si no hay apuesta abierta:
 - **Paso**.
@@ -101,27 +109,44 @@ Respuestas posibles ante una apuesta de la pareja rival:
 - **Reenvido N más**: sube la apuesta en N (mínimo 1 tanto) y la palabra pasa a la otra pareja.
 - **Órdago**.
 
-Detalles del flujo:
-- Responde primero el siguiente rival en orden de juego. Si dice "no quiero", **su compañero también
-  puede responder**. Si cualquiera de los dos quiere, queda aceptado. Si los dos dicen "no quiero", queda rechazado.
-- Si todos pasan, el lance queda **en paso**:
-  - Grande y chica en paso: el ganador cobra **1 tanto** en el recuento.
-  - Pares, juego y punto en paso: el ganador cobra solo el valor de sus jugadas (en punto, 1 tanto).
-- **Deje** (apuesta rechazada): la pareja que apostó cobra **en el momento**:
-  - 1 tanto si se rechaza la primera apuesta del lance;
-  - si se rechaza un reenvido, la cantidad que ya estaba aceptada antes de la última subida.
-- En pares y juego, si hay "no quiero", la pareja que rechazó **renuncia al lance**. La pareja que
-  apostó cobra el deje y, además, el valor de sus propias jugadas en el recuento.
-- **Órdago aceptado**: se muestran las cartas, se resuelve ese lance y su ganador **gana el juego**
-  (llega a 40 de golpe). El resto de la mano no se juega.
-- **Órdago rechazado**: se trata como cualquier "no quiero", con su deje.
+**Apuesta máxima** (D14): lo apostado en un lance no puede pasar de **40 tantos** en total. Para más, órdago.
+
+### 5.1 Quién responde (D12, FEM VI.2–4)
+1. Ante una apuesta, responde primero el **siguiente rival** en orden de juego.
+2. Si ese rival **sube u ordaga**, la palabra pasa a la otra pareja y su compañero ya no habla.
+3. Si quiere o no quiere, **su compañero habla siempre después** y puede querer, no querer, subir u ordagar,
+   **aunque el primero haya querido**.
+4. Se queda la respuesta más fuerte de los dos: **subida u órdago > quiero > no quiero**.
+   Si los dos dicen "no quiero", la apuesta queda rechazada.
+5. Mientras los rivales no suban, el **compañero de quien apostó no puede subir** la apuesta de su pareja
+   (FEM VI.2).
+
+### 5.2 Lance en paso
+Si todos pasan, el lance queda **en paso**:
+- Grande y chica en paso: el ganador cobra **1 tanto** en el recuento.
+- Pares, juego y punto en paso: el ganador cobra solo el valor de sus jugadas (en punto, 1 tanto).
+
+### 5.3 Apuesta rechazada (D13)
+La pareja que apostó cobra **en el momento**:
+- **Negada**: 1 tanto, si se rechaza la primera apuesta del lance.
+- **Deje**: si se rechaza una subida, la cantidad que ya estaba aceptada antes de la última subida.
+
+Además:
+- En **grande, chica y punto** solo se cobra lo rechazado: ni el tanto en paso ni el del punto.
+- En **pares y juego**, la pareja que rechazó **renuncia al lance**. La pareja que apostó cobra la negada
+  o el deje y, además, el valor de sus propias jugadas en el recuento (D2).
+
+### 5.4 Órdago
+- **Órdago aceptado**: se resuelve ese lance y su ganador **gana el juego** (llega a 40 de golpe).
+  El resto de la mano no se juega.
+- **Órdago rechazado**: se trata como cualquier "no quiero", con su negada o su deje.
 
 ## 6. Recuento
-Al terminar los lances se enseñan las cartas necesarias y se cuenta en este orden estricto:
-**grande → chica → pares → juego/punto**.
+Al terminar cada mano, **los cuatro jugadores enseñan todas sus cartas** (D16, LaFed art. 69), también tras
+un órdago aceptado. Se cuenta en este orden estricto: **grande → chica → pares → juego/punto**.
 
 - En cada lance se suma: lo envidado y aceptado (o el tanto en paso) más el valor de las jugadas, cuando corresponde.
-- Los dejes ya se cobraron durante la mano.
+- Las negadas y los dejes ya se cobraron durante la mano.
 - **En cuanto una pareja llega a 40 tantos**, durante la mano o en el recuento, **gana el juego al instante**.
   Lo que quede por contar no se cuenta, aunque la otra pareja también hubiera llegado a 40.
 - Al ganar un juego, los tantos vuelven a 0 y empieza el siguiente. Quien gana 2 juegos gana la partida.
@@ -135,14 +160,16 @@ Lo expone el motor con `getTimeoutAction(state, seat)`:
 
 | Situación | Acción por defecto |
 |---|---|
-| Decisión de mus | **"No hay mus"** |
-| Descarte | Descartar **1 carta**, la peor según la heurística del bot |
+| Decisión de mus | **"Corto"** |
+| Descarte | Descartar **1 carta** (D15): la primera que **no forme pareja** en el orden 4, 5, 6, 7, S, C, A, R; si todas forman jugada, la primera en ese mismo orden |
 | Hablar en un lance sin apuesta | **Paso** |
-| Responder a una apuesta | **No quiero** |
+| Responder a una apuesta (primer rival) | **No quiero** |
+| Responder a una apuesta (compañero del primer rival) | **Se mantiene la respuesta de su compañero** (D12) |
 
 ## 9. Información visible
 - **Jugador**: sus cartas, el número de cartas de los demás, declaraciones, envites, marcador y su
   propio descarte (de los demás, solo cuántas cartas descartaron).
-- **Espectador**: lo mismo que un jugador **pero sin ninguna carta**.
-- **Fin de mano**: se revelan las cartas de los jugadores que intervienen en el recuento.
-- **Órdago aceptado**: se revelan las cartas de todos.
+- **Espectador**: lo mismo que un jugador **pero sin ninguna carta** hasta el fin de mano; entonces
+  ve las de los cuatro, como los jugadores (D17).
+- **Aviso de rebarajado** (D10): visible para todos mientras dure.
+- **Fin de mano**: se revelan las cartas de los cuatro jugadores (D16), también tras un órdago aceptado.

@@ -38,8 +38,8 @@ de las pantallas sí se implementan desde H4 siguiendo el diseño de Figma (§13
    valida contra el motor de reglas y emite el nuevo estado. Nunca se confía en nada del cliente.
 2. **Información oculta = nunca sale del servidor.** Un cliente solo recibe **sus propias cartas**.
    Las cartas de los demás, el mazo y los descartes ajenos **jamás** se serializan hacia ese cliente,
-   tampoco hacia espectadores. Al final de la mano solo se revelan las cartas que las reglas obligan a
-   mostrar para el recuento. Hay tests que lo verifican (ver §9).
+   tampoco hacia espectadores. Al final de la mano se revelan las cartas de los cuatro (D16), también
+   a los espectadores (D17). Hay tests que lo verifican (ver §9).
 3. **Motor de reglas puro.** `packages/engine` no tiene I/O, ni red, ni `Date.now()`, ni `Math.random()`.
    El azar y el tiempo se inyectan. Mismo estado + misma acción + misma semilla = mismo resultado.
 4. **Barajado criptográficamente seguro** en producción: Fisher–Yates con `crypto.randomInt`.
@@ -133,8 +133,10 @@ Reglas de dependencia (**se validan con eslint `import/no-restricted-paths` o de
 - Toda entrada externa (mensajes WS, cuerpos REST, query params, env) se valida con **Zod** en `shared`.
 - Nombres de archivo `kebab-case.ts`; componentes React `PascalCase.tsx`.
 - Un componente / módulo = una responsabilidad. Archivos > 300 líneas → dividir.
-- Sin números mágicos: constantes en `packages/shared/src/constants.ts`
-  (`TURN_TIMEOUT_MS = 30_000`, `POINTS_TO_WIN_GAME = 40`, `GAMES_TO_WIN_MATCH = 2`, `MAX_SPECTATORS = 5`…).
+- Sin números mágicos. Constantes de **producto** en `packages/shared/src/constants.ts`
+  (`TURN_TIMEOUT_MS = 30_000`, `MAX_SPECTATORS = 5`…); constantes de **reglas** en
+  `packages/engine/src/rules.ts` (`POINTS_TO_WIN_GAME = 40`, `GAMES_TO_WIN_MATCH = 2`, `MAX_BET = 40`…),
+  porque `engine` no puede importar `shared` (ADR-0002).
 - Textos de UI centralizados en `apps/web/src/i18n/es.ts` (solo español de momento, pero preparado para i18n).
 - Logs estructurados (pino) con `roomId`, `handId`, `userId`. **Nunca** loguear cartas ocultas, contraseñas ni tokens.
 
@@ -153,10 +155,17 @@ API pública mínima:
 
 ```ts
 createMatch(config: MatchConfig, rng: Rng): MatchState
-getLegalActions(state: MatchState, seat: Seat): Action[]
-applyAction(state: MatchState, seat: Seat, action: Action, ctx: { rng: Rng }): Result<{ state: MatchState; events: GameEvent[] }, MusError>
+getLegalActions(state: MatchState, seat: Seat): readonly Action[]
+applyAction(state: MatchState, seat: Seat, action: Action, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
+startNextHand(state: MatchState, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
 getView(state: MatchState, viewer: Seat | 'spectator'): PlayerView   // filtra información oculta
+getEventView(event: GameEvent, viewer: Seat | 'spectator'): GameEvent | null   // filtra cada evento
+getTimeoutAction(state: MatchState, seat: Seat): Action | null
 ```
+
+- Diseño detallado en `docs/adr/ADR-0002-motor-de-reglas.md`. Al acabar una mano el estado queda en
+  `handOver` con las cartas reveladas; el servidor llama a `startNextHand` cuando toca. **Todo evento
+  pasa por `getEventView` antes de salir del servidor.**
 
 - `Seat = 0 | 1 | 2 | 3`. Parejas: **0 y 2** contra **1 y 3**. El orden de juego es **antihorario**
   (`siguiente = (seat + 1) % 4` representa "a la derecha").
@@ -184,7 +193,8 @@ getView(state: MatchState, viewer: Seat | 'spectator'): PlayerView   // filtra i
 - **Salas privadas**: aparecen en el listado, pero unirse (como jugador o espectador) requiere el código
   de 6 caracteres generado al crearla. Código comparado en tiempo constante; rate-limit de intentos.
 - **Espectadores**: máximo 5 por sala. Reciben `getView(state, 'spectator')`: mesa, marcador, amarracos,
-  envites y número de cartas, **nunca cartas**. Pueden chatear y reaccionar.
+  envites y número de cartas; **ninguna carta** hasta el fin de mano, cuando ven las de los cuatro (D17).
+  Pueden chatear y reaccionar.
 - **Chat**: único para jugadores y espectadores. Mensajes ≤ 200 caracteres, sanitizados, rate-limit
   (p. ej. 5 msg / 10 s), etiqueta de rol (jugador/espectador).
 - **Reacciones**: emojis de una lista cerrada (definida en `shared`), mostrados como emojis flotantes.
