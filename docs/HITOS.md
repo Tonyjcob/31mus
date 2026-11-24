@@ -102,7 +102,7 @@ juegos al mejor de 3, rotación de la mano, `getLegalActions`, `getView` (filtra
 - Primer reparto sin eventos: el servidor manda a cada jugador sus cartas desde `getView` al crear la
   partida (H3).
 
-### ⬜ H2 · Bots (`packages/bots`)
+### ✅ H2 · Bots (`packages/bots`)
 Bot de dificultad **media**: evalúa la fuerza de la mano por lance, decide el mus y los descartes,
 envida y acepta con umbrales, se tira **faroles** con probabilidad controlada y rara vez lanza órdagos.
 Tiene en cuenta el marcador (más agresivo cerca de 40). También un bot aleatorio como referencia
@@ -124,6 +124,31 @@ para los tests y un retardo "humano" configurable (1–3 s; lo aplica el servido
 - Los faroles aparecen con una frecuencia medida y documentada.
 - Cada personaje tiene un estilo medible distinto (frecuencia de envite, farol y órdago) y ninguno gana a otro
   más del 60 % de las veces en 5.000 partidas (mismo nivel, distinto estilo).
+
+**Notas de cierre (24/11/2026, aprobado por Antonio)**
+- DoD verificada con `pnpm --filter @31mus/bots sim` (resultados en `docs/bots/MEDICIONES.md`):
+  10.000 partidas bot contra bot sin errores; el bot medio gana el 96,1 % al aleatorio en 5.000
+  partidas; faroles medidos (del 4 % de los envites de El Abuelo al 22 % de El Pollo); estilos distintos
+  en envites, faroles, órdagos, quieros y cortes; los enfrentamientos entre personajes quedan entre el
+  46,6 % y el 54,6 % en 5.000 partidas cada uno.
+- Diseño en `docs/adr/ADR-0003-bots.md`; API en `docs/ARQUITECTURA.md` §8. Personajes con los nombres y
+  textos de esta tabla, aprobados con el plan. Simulaciones en dos niveles (CLAUDE.md §9).
+- Calibración: el Bot neutro se ajustó para que llevar cualquier rasgo al extremo no gane claramente;
+  los personajes se desvían de él sin descompensarse.
+- `/code-review` del PR (#4): un error real y menor, corregido. Al valorar una mano sin juego para el
+  mus y el descarte, el rival que no juega el punto contaba como derrotado, cuando lo que tiene es
+  juego y gana él (`value.ts`). También se nombró el término medio de los rasgos (`NEUTRAL_TRAIT`).
+  Simulación de la DoD repetida tras la corrección: ver `docs/bots/MEDICIONES.md`.
+
+**Deuda técnica detectada**
+- La fuerza de la mano no tiene en cuenta las cartas propias (que no pueden estar en otra mano) ni
+  cuántas cartas descartó cada rival. Mejoraría el juego sin cambiar la API (ADR-0003).
+- El bot solo lee el lance en curso: no recuerda quién envidó en lances anteriores ni la apuesta que
+  quedó tapada por una subida.
+- Los bots quieren poco (entre el 10 % y el 13 % de las respuestas): coherente entre ellos, pero falta
+  comprobarlo contra humanos en las pruebas de H3 y H5.
+- La simulación completa tarda unos 10 minutos y no corre en CI; valorar un trabajo nocturno.
+- Los tests de `bots` tardan ~28 s con cobertura (la muestra de 3.000 partidas).
 
 ### ⬜ H3 · Servidor de juego (`apps/game`)
 `MusRoom` en Colyseus, con los modos `solo`, `duo_vs_bots` y `2v2`. Asientos, inicio cuando se llenan,

@@ -1,7 +1,7 @@
 # Arquitectura de 31mus
 
 > Documento vivo: se actualiza al cerrar cada hito (CLAUDE.md §14).
-> Las decisiones de detalle están en `docs/adr/`. Última actualización: H1 (24/11/2026).
+> Las decisiones de detalle están en `docs/adr/`. Última actualización: H2 (24/11/2026).
 
 ## 1. Visión general
 
@@ -24,7 +24,7 @@
 | Ruta | Rol | Estado |
 |---|---|---|
 | `packages/engine` | Reglas del mus, puras y deterministas | Completo (H1, §7) |
-| `packages/bots` | IA de bots y personajes | Vacío (H2) |
+| `packages/bots` | IA de bots y personajes | Completo (H2, §8) |
 | `packages/shared` | Constantes, esquemas Zod, mensajes cliente↔servidor | Constantes y `parseEnv` |
 | `packages/design-tokens` | Tokens volcados de Figma | Vacío (H4) |
 | `packages/config` | tsconfig, ESLint, Prettier, Vitest compartidos | Completo |
@@ -113,3 +113,33 @@ serialización JSON) y 1.000 partidas aleatorias completas. Cobertura del 100 %.
 **Pendiente para el servidor (H3).** El `Rng` de producción con `crypto.randomInt` vive en
 `apps/game`, no en el motor; el temporizador de turno y la pausa para mostrar las cartas al final de
 la mano también los decide el servidor.
+
+## 8. Bots (`packages/bots`)
+
+Diseño en `docs/adr/ADR-0003-bots.md`; mediciones en `docs/bots/MEDICIONES.md`.
+
+**Sin trampas por construcción.** El bot recibe la `PlayerView` de su asiento y las acciones legales,
+nunca el `MatchState`: ve lo mismo que un humano sentado en ese sitio.
+
+**API pública** (`src/index.ts`):
+
+| Exporta | Qué hace |
+|---|---|
+| `decideAction({ view, legal, persona, rng })` | Bot medio: devuelve `{ action, bluff }`; la acción es siempre una de `legal` |
+| `randomAction(legal, rng)` | Bot aleatorio de referencia (también para los tests de `apps/game`) |
+| `BOT_PERSONAS`, `NEUTRAL_PERSONA` | Catálogo de personajes; el neutro sustituye a quien se desconecta |
+| `BotPersona`, `BotStyle`, `BotInput`, `BotDecision` | Tipos |
+
+El retardo «humano» (`BOT_DELAY_MIN_MS`–`BOT_DELAY_MAX_MS`, en `shared`) lo aplica el servidor.
+
+**Cómo decide.** La fuerza de la mano en cada lance sale de tablas exactas por combinación de figuras
+(330 combinaciones, 91.390 manos), calculadas al cargar el paquete con los evaluadores del motor
+(`strength.ts`). `odds.ts` la convierte en la probabilidad de que gane la pareja, según quién juega el
+lance, lo que hizo el compañero y si un rival envidó (`situation.ts`). Con eso: mus y descarte por valor
+esperado (`value.ts`), envites, respuestas, faroles y órdagos (`betting.ts`). Los personajes son cinco
+parámetros de estilo (`personas.ts`) sobre las constantes de ajuste de `tuning.ts`.
+
+**Pruebas.** Escenarios de cada decisión; en 1.000 partidas, legalidad, determinismo e independencia
+de las cartas ocultas; 2.000 partidas contra el aleatorio (≥ 70 %) en cada commit. La DoD completa
+(10.000 partidas y la matriz de personajes) va aparte: `pnpm --filter @31mus/bots sim` (~10 min).
+Cobertura del 100 %.

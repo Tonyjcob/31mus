@@ -2,7 +2,10 @@
   "extends": "@31mus/config/tsconfig/library.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    // Tipos de Node solo para los tests (la simulación escribe docs/bots/MEDICIONES.md). El build
+    // usa tsconfig.build.json, que los quita: el código de producción no puede usarlos.
+    "types": ["node"]
   },
   "include": ["src"]
 }

@@ -260,6 +260,8 @@ getTimeoutAction(state: MatchState, seat: Seat): Action | null
   - `getLegalActions` nunca vacío para el jugador en turno; cualquier acción legal aplica sin error.
   - Partidas completas aleatorias (bots aleatorios) terminan siempre.
 - `bots`: simulación de **≥ 10.000 partidas** bot vs bot sin excepciones; el bot medio gana claramente al bot aleatorio.
+  En dos niveles (ADR-0003 §6): `pnpm test` ejecuta una muestra corta en cada commit y
+  `pnpm --filter @31mus/bots sim` la simulación completa de la DoD, antes de cerrar el hito y al cambiar el ajuste.
 - `game`: tests de integración con `@colyseus/testing`: asientos, inicio, timeout, reconexión,
   espectadores, límite de 5, sala privada con código, **test de fuga de información** (inspeccionar todo
   lo que recibe cada cliente y espectador y comprobar que no contiene cartas ajenas).
