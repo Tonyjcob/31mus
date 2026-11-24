@@ -20,3 +20,17 @@ export { err, ok } from './result.js';
 export type { Result } from './result.js';
 export { MUS_ERROR_CODES, musError } from './errors.js';
 export type { MusError, MusErrorCode } from './errors.js';
+export { LANCES, anyJuego, jugadaPoints, lancePlayers, lanceWinner } from './evaluators/lances.js';
+export type { Lance } from './evaluators/lances.js';
+export { chicaKey, compareChica, compareGrande, grandeKey } from './evaluators/grande-chica.js';
+export type { ChicaKey, GrandeKey } from './evaluators/grande-chica.js';
+export { comparePares, paresKey, paresPoints } from './evaluators/pares.js';
+export type { ParesKey, ParesKind } from './evaluators/pares.js';
+export {
+  JUEGO_ORDER,
+  compareJuego,
+  comparePunto,
+  handPoints,
+  juegoKey,
+  juegoPoints,
+} from './evaluators/juego-punto.js';
