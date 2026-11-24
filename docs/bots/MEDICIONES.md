@@ -7,12 +7,12 @@
 ## Partidas bot contra bot
 
 - Partidas: 10.000, sin errores.
-- Manos jugadas: 184.767 (18,5 por partida).
-- Decisiones: 2.697.438.
+- Manos jugadas: 181.542 (18,2 por partida).
+- Decisiones: 2.698.898.
 
 ## Bot medio contra bot aleatorio
 
-El Bot neutro gana el **96,0 %** de 5000 partidas
+El Bot neutro gana el **96,1 %** de 5000 partidas
 (cambiando de pareja la mitad). Mínimo exigido: 70,0 %.
 
 ## Estilo de cada personaje
@@ -27,11 +27,11 @@ El Bot neutro gana el **96,0 %** de 5000 partidas
 
 | Personaje | Envites por mano | Faroles | Órdagos por mano | Quiere | Corta |
 |---|---|---|---|---|---|
-| El Abuelo | 1,20 | 4,4 % | 0,003 | 10,5 % | 56,7 % |
-| La Faraona | 1,57 | 11,0 % | 0,137 | 12,8 % | 54,2 % |
-| El Pollo | 1,77 | 22,2 % | 0,031 | 13,4 % | 54,5 % |
-| Doña Rosario | 1,48 | 6,3 % | 0,013 | 12,9 % | 32,3 % |
-| Bot | 1,46 | 15,9 % | 0,040 | 12,5 % | 53,9 % |
+| El Abuelo | 1,22 | 4,3 % | 0,003 | 10,9 % | 52,9 % |
+| La Faraona | 1,60 | 10,8 % | 0,138 | 13,0 % | 49,6 % |
+| El Pollo | 1,78 | 21,8 % | 0,032 | 13,6 % | 49,5 % |
+| Doña Rosario | 1,51 | 6,0 % | 0,014 | 12,9 % | 32,0 % |
+| Bot | 1,49 | 15,2 % | 0,041 | 12,7 % | 49,3 % |
 
 ## Enfrentamientos entre personajes
 
@@ -40,13 +40,13 @@ ninguno puede pasar del 60,0 %.
 
 | Personaje | Contra | Gana |
 |---|---|---|
-| El Abuelo | La Faraona | 53,9 % |
-| El Abuelo | El Pollo | 53,1 % |
-| El Abuelo | Doña Rosario | 54,4 % |
-| El Abuelo | Bot | 51,8 % |
-| La Faraona | El Pollo | 51,0 % |
-| La Faraona | Doña Rosario | 48,2 % |
-| La Faraona | Bot | 47,5 % |
-| El Pollo | Doña Rosario | 48,6 % |
-| El Pollo | Bot | 48,0 % |
-| Doña Rosario | Bot | 49,1 % |
+| El Abuelo | La Faraona | 53,7 % |
+| El Abuelo | El Pollo | 54,6 % |
+| El Abuelo | Doña Rosario | 54,3 % |
+| El Abuelo | Bot | 52,0 % |
+| La Faraona | El Pollo | 51,1 % |
+| La Faraona | Doña Rosario | 48,0 % |
+| La Faraona | Bot | 47,6 % |
+| El Pollo | Doña Rosario | 49,0 % |
+| El Pollo | Bot | 46,6 % |
+| Doña Rosario | Bot | 49,2 % |

@@ -127,15 +127,18 @@ para los tests y un retardo "humano" configurable (1–3 s; lo aplica el servido
 
 **Notas de cierre (24/11/2026, aprobado por Antonio)**
 - DoD verificada con `pnpm --filter @31mus/bots sim` (resultados en `docs/bots/MEDICIONES.md`):
-  10.000 partidas bot contra bot sin errores; el bot medio gana el 96,0 % al aleatorio en 5.000
+  10.000 partidas bot contra bot sin errores; el bot medio gana el 96,1 % al aleatorio en 5.000
   partidas; faroles medidos (del 4 % de los envites de El Abuelo al 22 % de El Pollo); estilos distintos
   en envites, faroles, órdagos, quieros y cortes; los enfrentamientos entre personajes quedan entre el
-  47,5 % y el 54,4 % en 5.000 partidas cada uno.
+  46,6 % y el 54,6 % en 5.000 partidas cada uno.
 - Diseño en `docs/adr/ADR-0003-bots.md`; API en `docs/ARQUITECTURA.md` §8. Personajes con los nombres y
   textos de esta tabla, aprobados con el plan. Simulaciones en dos niveles (CLAUDE.md §9).
 - Calibración: el Bot neutro se ajustó para que llevar cualquier rasgo al extremo no gane claramente;
   los personajes se desvían de él sin descompensarse.
-- `/code-review` del PR: en curso.
+- `/code-review` del PR (#4): un error real y menor, corregido. Al valorar una mano sin juego para el
+  mus y el descarte, el rival que no juega el punto contaba como derrotado, cuando lo que tiene es
+  juego y gana él (`value.ts`). También se nombró el término medio de los rasgos (`NEUTRAL_TRAIT`).
+  Simulación de la DoD repetida tras la corrección: ver `docs/bots/MEDICIONES.md`.
 
 **Deuda técnica detectada**
 - La fuerza de la mano no tiene en cuenta las cartas propias (que no pueden estar en otra mano) ni
