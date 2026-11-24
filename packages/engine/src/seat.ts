@@ -40,3 +40,12 @@ export function seatsFrom(mano: Seat): PerSeat<Seat> {
 export function distanceFromMano(seat: Seat, mano: Seat): number {
   return (seat - mano + SEATS.length) % SEATS.length;
 }
+
+/** Parejas: la 0 (asientos 0 y 2) y la 1 (asientos 1 y 3). */
+export const TEAMS = [0, 1] as const;
+export type Team = (typeof TEAMS)[number];
+
+/** Pareja a la que pertenece un asiento. */
+export function teamOf(seat: Seat): Team {
+  return seat % 2 === 0 ? 0 : 1;
+}

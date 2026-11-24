@@ -7,10 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { isCard } from '../cards.js';
 import type { Card } from '../cards.js';
 import { SEATS } from '../seat.js';
 import type { PerSeat, Seat } from '../seat.js';
+import { card } from '../testing/notation.js';
 import { LANCES, anyJuego, jugadaPoints, lanceWinner } from './lances.js';
 import type { Lance } from './lances.js';
 
@@ -18,14 +18,6 @@ const TABLE_PATH = fileURLToPath(
   new URL('../../../../docs/engine/CASOS_EVALUACION.md', import.meta.url),
 );
 const MIN_CASES = 60;
-
-const RANK_CODES: Readonly<Record<string, string>> = { R: '12', C: '11', S: '10' };
-const SUIT_CODES: Readonly<Record<string, string>> = {
-  o: 'oros',
-  c: 'copas',
-  e: 'espadas',
-  b: 'bastos',
-};
 
 interface Case {
   readonly id: string;
@@ -37,11 +29,11 @@ interface Case {
 }
 
 function parseCard(token: string, id: string): Card {
-  const rank = token.slice(0, -1);
-  const suit = SUIT_CODES[token.slice(-1)];
-  const card = `${String(suit)}-${RANK_CODES[rank] ?? rank}`;
-  if (!isCard(card)) throw new Error(`${id}: carta no válida «${token}».`);
-  return card;
+  try {
+    return card(token);
+  } catch {
+    throw new Error(`${id}: carta no válida «${token}».`);
+  }
 }
 
 function parseSeat(value: string, id: string): Seat | null {

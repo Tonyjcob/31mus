@@ -1,7 +1,16 @@
 // API pública del motor de reglas (CLAUDE.md §6, ADR-0002).
 export * from './rules.js';
-export { SEATS, distanceFromMano, nextSeat, partnerOf, perSeat, seatsFrom } from './seat.js';
-export type { PerSeat, Seat } from './seat.js';
+export {
+  SEATS,
+  TEAMS,
+  distanceFromMano,
+  nextSeat,
+  partnerOf,
+  perSeat,
+  seatsFrom,
+  teamOf,
+} from './seat.js';
+export type { PerSeat, Seat, Team } from './seat.js';
 export {
   FULL_DECK,
   MUS_RANKS,
@@ -34,3 +43,27 @@ export {
   juegoKey,
   juegoPoints,
 } from './evaluators/juego-punto.js';
+export { sameAction } from './actions.js';
+export type { Action, BetAction } from './actions.js';
+export type { GameEvent, PointsReason, Viewer } from './events.js';
+export { getEventView } from './events.js';
+export type {
+  Bet,
+  BetResponse,
+  Declarations,
+  HandState,
+  LanceOutcome,
+  LanceRecord,
+  MatchConfig,
+  MatchState,
+  Phase,
+  Score,
+} from './state.js';
+export type { CardPile } from './deck.js';
+export { createMatch, startNextHand } from './match.js';
+export { applyAction } from './apply-action.js';
+export { getLegalActions, pendingSeats } from './legal-actions.js';
+export { TIMEOUT_DISCARD_ORDER, getTimeoutAction, timeoutDiscard } from './timeout.js';
+export { getView } from './view.js';
+export type { PhaseView, PlayerView } from './view.js';
+export type { Step } from './step.js';
