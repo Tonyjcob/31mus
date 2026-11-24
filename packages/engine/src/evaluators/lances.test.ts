@@ -31,11 +31,11 @@ describe('jugadaPoints', () => {
     expect(jugadaPoints('pares', hands, 0)).toBe(1 + 2);
     expect(jugadaPoints('pares', hands, 1)).toBe(0);
     expect(jugadaPoints('juego', hands, 0)).toBe(3);
-    expect(jugadaPoints('juego', hands, 3)).toBe(2);
+    expect(jugadaPoints('juego', hands, 1)).toBe(2);
   });
 
   it('el punto vale 1; grande y chica no tienen valor de jugada', () => {
-    expect(jugadaPoints('punto', hands, 2)).toBe(1);
+    expect(jugadaPoints('punto', hands, 0)).toBe(1);
     expect(jugadaPoints('grande', hands, 0)).toBe(0);
     expect(jugadaPoints('chica', hands, 0)).toBe(0);
   });

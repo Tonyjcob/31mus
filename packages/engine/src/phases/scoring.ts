@@ -33,10 +33,11 @@ export function addPoints(
 ): Scored {
   const { scores, gamesWon, gameNumber } = step.state;
   const score = Math.min(scores[team] + points, POINTS_TO_WIN_GAME);
+  // El evento lleva los tantos que de verdad suben al marcador, ya topados en 40.
   let next = emit(updateState(step, { scores: withTeam(scores, team, score) }), {
     type: 'pointsScored',
     team,
-    points,
+    points: score - scores[team],
     lance,
     reason,
   });
@@ -93,14 +94,16 @@ function award(state: MatchState, { lance, outcome }: LanceRecord): Award | null
     case 'paso': {
       const winner = winnerOf(state, lance);
       const points =
-        lance === 'grande' || lance === 'chica' ? PASO_POINTS : jugadaPoints(lance, hands, winner);
+        lance === 'grande' || lance === 'chica'
+          ? PASO_POINTS
+          : jugadaPoints(lance, hands, teamOf(winner));
       return { team: teamOf(winner), points };
     }
     case 'querido': {
       const winner = winnerOf(state, lance);
       return {
         team: teamOf(winner),
-        points: outcome.amount + jugadaPoints(lance, hands, winner),
+        points: outcome.amount + jugadaPoints(lance, hands, teamOf(winner)),
       };
     }
   }

@@ -68,7 +68,7 @@ También: `.gitignore`, `.env.example`, `LICENSE` (todos los derechos reservados
 - Skills de la §15 no instaladas en esta sesión: `engineering:*` y `design-skills:*`. El ADR-0001 se
   redactó sin `engineering:architecture`.
 
-### 🟡 H1 · Motor de reglas (`packages/engine`)
+### ✅ H1 · Motor de reglas (`packages/engine`)
 Cartas, baraja, RNG inyectable, reparto, mus y descartes, rebarajado de descartes, evaluadores
 (grande, chica, pares, juego, punto), declaraciones, máquina de estados de lances, envites
 (envido, envido N, reenvido, quiero, no quiero, órdago, negada y deje), recuento ordenado con corte a 40,
@@ -80,6 +80,27 @@ juegos al mejor de 3, rotación de la mano, `getLegalActions`, `getView` (filtra
 - Cobertura ≥ 95 % y tests de propiedades de los invariantes (`CLAUDE.md` §9).
 - 1.000 partidas completas con jugadores aleatorios terminan sin errores.
 - Una tabla de casos de evaluación (≥ 60 manos) revisada por Antonio.
+
+**Notas de cierre (24/11/2026, aprobado por Antonio)**
+- DoD verificada: implementa REGLAS_MUS con D1–D4 y D10–D17; 182 tests con cobertura del 100 %;
+  tests de propiedades (40 cartas sin duplicados, tantos que no bajan, turnos, legalidad de la acción
+  por tiempo, fugas de información para jugadores y espectadores, inmutabilidad, ida y vuelta por JSON)
+  y 1.000 partidas aleatorias completas; tabla de 62 casos revisada por Antonio (24/11/2026).
+- Diseño en `docs/adr/ADR-0002-motor-de-reglas.md`; API en `docs/ARQUITECTURA.md` §7. D17 decidida al
+  cerrar: los espectadores ven las cartas enseñadas al final de la mano.
+- Decisiones menores dentro del ADR: los tantos se topan en 40 al cerrar el juego (también en el evento
+  `pointsScored`); `createMatch` devuelve solo el estado, sin eventos del primer reparto;
+  `MatchConfig.firstMano` es opcional (si falta, se sortea).
+- `/code-review` del PR (#2): ningún hallazgo de peso. Se corrigieron tres detalles menores: tantos sin
+  topar en el evento, una pareja pasada como asiento a `jugadaPoints` y un comentario desfasado.
+
+**Deuda técnica detectada**
+- El `Rng` de producción (`crypto.randomInt`) se implementa en `apps/game` (H3); el motor solo trae
+  el de semilla para tests.
+- Los eventos del motor no llevan marca de tiempo ni actor de sistema: el log persistido de §2.5 los
+  completa en el servidor (H3).
+- Primer reparto sin eventos: el servidor manda a cada jugador sus cartas desde `getView` al crear la
+  partida (H3).
 
 ### ⬜ H2 · Bots (`packages/bots`)
 Bot de dificultad **media**: evalúa la fuerza de la mano por lance, decide el mus y los descartes,

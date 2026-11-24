@@ -156,6 +156,7 @@ API pública mínima:
 ```ts
 createMatch(config: MatchConfig, rng: Rng): MatchState
 getLegalActions(state: MatchState, seat: Seat): readonly Action[]
+pendingSeats(state: MatchState): readonly Seat[]   // a quién se espera (los 4 en el descarte)
 applyAction(state: MatchState, seat: Seat, action: Action, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
 startNextHand(state: MatchState, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
 getView(state: MatchState, viewer: Seat | 'spectator'): PlayerView   // filtra información oculta
