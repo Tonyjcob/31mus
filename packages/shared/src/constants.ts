@@ -4,6 +4,13 @@
 /** Tiempo de turno por decisión (REGLAS_MUS.md §1). */
 export const TURN_TIMEOUT_MS = 30_000;
 
+/**
+ * Retardo «humano» de los bots antes de actuar: un valor al azar en este rango. Lo aplica el
+ * servidor, no el bot (HITOS H2, ADR-0003).
+ */
+export const BOT_DELAY_MIN_MS = 1_000;
+export const BOT_DELAY_MAX_MS = 3_000;
+
 /** Espectadores máximos por sala (CLAUDE.md §7). */
 export const MAX_SPECTATORS = 5;
 
