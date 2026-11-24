@@ -66,24 +66,35 @@ filtrado del motor:
 
 ### 2. La lógica de la mesa fuera de Colyseus (`MatchController`)
 
+Estructura real al cerrar H3 (la propuesta inicial tenía `seating.ts`, `turn-timer.ts` y
+`bot-driver.ts`; al implementarlo, los asientos quedaron en `lobby.ts` y el turno y el retardo de los
+bots, en `turn-timers.ts`):
+
 ```
 apps/game/src/
-├─ main.ts                    # arranque: env, logger, servidor
+├─ main.ts                    # arranque: env, logger, log de partidas, servidor y apagado ordenado
 ├─ server.ts                  # Server de Colyseus + /health (sustituye al node:http de H0)
-├─ rooms/mus-room.ts          # Adaptador fino: mensajes ↔ controlador, Schema, reconexión
+├─ rooms/
+│  ├─ mus-room.ts             # Adaptador fino: mensajes ↔ mesa, Schema, caídas y reconexión
+│  ├─ admission.ts            # Quién entra: código privado, plazas, espectadores ≤ 5
+│  ├─ participants.ts         # Sesiones conectadas y caídas por usuario
+│  ├─ room-state.ts           # Schema público (sin cartas)
+│  └─ room-messages.ts, room-types.ts
 ├─ table/
+│  ├─ table.ts                # Lobby + partida: presencia, sentarse, empezar, cerrar
+│  ├─ lobby.ts                # Asientos, modos, personajes y quién falta para empezar
+│  ├─ table-session.ts        # Quién controla cada asiento, pausa y cierre (D7, D20)
 │  ├─ match-controller.ts     # Orquesta la partida: acciones, turnos, bots, manos, fin
-│  ├─ seating.ts              # Asientos, modos, quién falta para empezar
-│  ├─ turn-timer.ts           # Deadline y acción por tiempo agotado
-│  ├─ bot-driver.ts           # Turno de bot con retardo 1–3 s
+│  ├─ turn-timers.ts          # Deadline, acción por tiempo agotado y retardo 1–3 s de los bots
+│  ├─ match-types.ts
 │  └─ outbound.ts             # Único constructor de mensajes de partida (§1)
-├─ chat/                      # Sanitizado y rate-limit de chat y reacciones
+├─ chat/room-chat.ts          # Sanitizado y rate-limit de chat y reacciones
 ├─ private-code.ts            # Generación y comparación del código
 ├─ identity/                  # Puerto de identidad (§3)
-├─ match-log/                 # Puerto MatchLogStore y adaptadores (§4)
-├─ infra/rng.ts               # Rng con crypto.randomInt
-├─ infra/scheduler.ts         # Puerto de tiempo: now(), setTimeout, clearTimeout
-└─ cli/                       # Cliente de consola y script de partida (§9)
+├─ match-log/                 # Puerto MatchLogStore, MatchRecorder y adaptadores (§4)
+├─ infra/                     # rng (crypto.randomInt), scheduler, rate-limiter, logger
+├─ testing/                   # Banco de tests y detector de fugas (fuera del build)
+└─ cli/                       # Cliente de consola y script de partida (§9, fuera del build)
 ```
 
 - `MatchController` no importa nada de Colyseus. Recibe por constructor un `Scheduler` (tiempo), un
@@ -299,4 +310,4 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 6. [x] `MatchLogStore` en memoria y en ficheros.
 7. [x] Cliente de consola y script de partida completa.
 8. [x] Tests de §8, fuga de información y cobertura ≥ 90 %.
-9. [ ] Al cerrar H3: `/code-review`, HITOS, `docs/ARQUITECTURA.md` §9 y CLAUDE.md §4/§7.
+9. [x] Al cerrar H3: `/code-review`, HITOS, `docs/ARQUITECTURA.md` §9 y CLAUDE.md §4/§7/§16.

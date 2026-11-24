@@ -167,6 +167,39 @@ Diseño en `docs/adr/ADR-0004-servidor-de-juego.md` (aceptado el 24/11/2026).
 - **Test de fuga de información** en verde: ningún mensaje a un cliente o espectador contiene cartas ajenas.
 - Se puede jugar una partida completa con un cliente de pruebas por consola o con un script.
 
+**Notas de cierre (25/11/2026, pendiente de la aprobación de Antonio)**
+- DoD verificada:
+  - Flujos de §7 con clientes reales del SDK: lobby y asientos, inicio por modo, personajes, sala
+    privada con código y límite de intentos, espectadores (≤ 5, vista sin cartas), turno de 30 s con
+    acción por tiempo agotado, idempotencia, caída y reconexión (misma sesión o nueva), bot que toma
+    el asiento y lo devuelve, pausa sin humanos y cierre por abandono, chat y reacciones con límite.
+    La clasificatoria es de H7.
+  - Test de fuga en verde: partidas completas en `solo` con espectador y en `duo_vs_bots` con caídas
+    y vueltas; busca cartas en todo el JSON que recibe cada cliente. Se comprobó que detecta una
+    fuga provocada a propósito.
+  - `pnpm --filter @31mus/game play:script` juega una partida entera (21 manos en ~16 s) y
+    `pnpm --filter @31mus/game play` permite jugarla a mano contra `pnpm dev`.
+- 91 tests en `game`; cobertura 98,2 % de sentencias y 94,3 % de ramas (umbral 90 %, sin `src/cli/` ni
+  `main.ts`). Diseño en ADR-0004; arquitectura en `docs/ARQUITECTURA.md` §9.
+- D22 (24/11): el sorteo de rivales es solo entre los cuatro personajes con nombre.
+- `/code-review` de la rama: dos errores reales, los dos corregidos con su test (e93f55d).
+  - Un jugador sentado que entraba en su sala como espectador (otra pestaña) dejaba el asiento
+    «conectado» sin nadie: ningún bot lo tomaba y no había pausa ni cierre por abandono.
+  - Al apagar el servidor se podía perder la línea `finish` de las partidas abandonadas.
+  - Normas: sin incumplimientos. Solo se anotó que `@vitest/coverage-v8` entró en `game` sin
+    justificarlo en el commit (es la misma dependencia que ya usan los paquetes).
+
+**Deuda técnica detectada**
+- Un solo proceso y sin Redis: rate-limits, presencia y salas en memoria (H7/H10).
+- Si el proceso cae a mitad de partida, la partida se pierde; quedan guardadas las manos terminadas (H9).
+- El log de partidas no tiene entrega garantizada: un fallo al escribir se registra y la partida sigue
+  (se decide con Prisma en H6).
+- La identidad es solo la de desarrollo; el ticket JWT llega en H6.
+- `mus-room.ts` está en 297 líneas: lo nuevo de la sala debe ir en módulos aparte.
+- Una caída en el lobby o de un espectador cuenta como salida (sin reconexión); solo se guarda la
+  sesión de quien juega una partida en curso.
+- Sigue pendiente comprobar contra humanos lo poco que quieren los bots (deuda de H2): pasa a H5.
+
 ### ⬜ H4 · Mesa jugable (`apps/web`, parte 1)
 **Requisito previo:** pantallas de mesa (escritorio y móvil) aprobadas por Antonio en Figma.
 Primero: volcar las variables de Figma a `packages/design-tokens`. Implementar con `figma:figma-design-to-code`.

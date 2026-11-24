@@ -1,7 +1,7 @@
 # Arquitectura de 31mus
 
 > Documento vivo: se actualiza al cerrar cada hito (CLAUDE.md §14).
-> Las decisiones de detalle están en `docs/adr/`. Última actualización: H2 (24/11/2026).
+> Las decisiones de detalle están en `docs/adr/`. Última actualización: H3 (25/11/2026).
 
 ## 1. Visión general
 
@@ -25,12 +25,12 @@
 |---|---|---|
 | `packages/engine` | Reglas del mus, puras y deterministas | Completo (H1, §7) |
 | `packages/bots` | IA de bots y personajes | Completo (H2, §8) |
-| `packages/shared` | Constantes, esquemas Zod, mensajes cliente↔servidor | Constantes y `parseEnv` |
+| `packages/shared` | Constantes, esquemas Zod, mensajes cliente↔servidor | Constantes, `parseEnv` y protocolo de `game` (H3, §9) |
 | `packages/design-tokens` | Tokens volcados de Figma | Vacío (H4) |
 | `packages/config` | tsconfig, ESLint, Prettier, Vitest compartidos | Completo |
 | `apps/web` | Cliente React + Vite | «Hola» |
 | `apps/api` | API REST | «Hola» + `/health` en `node:http` (NestJS en H6) |
-| `apps/game` | Servidor de juego | «Hola» + `/health` en `node:http` (Colyseus en H3) |
+| `apps/game` | Servidor de juego | Colyseus completo, sin clasificatoria (H3, §9) |
 
 ## 3. Reglas de dependencias
 
@@ -41,14 +41,15 @@ engine        ← (nada)
 bots          → engine
 shared        → engine (solo tipos)
 design-tokens ← (nada)
-game          → engine, bots, shared
-api           → shared
+game          → engine, bots, shared (y db desde H6, D18)
+api           → shared (y db desde H6)
+db            → shared (solo tipos; H6)
 web           → shared, design-tokens, engine (solo presentación)
 ```
 
 Además: `engine`, `bots`, `shared` y `design-tokens` no pueden usar módulos de Node, no hay ciclos,
 todo import debe estar declarado en su `package.json` y el código de producción no importa
-devDependencies. El perfil ESLint `pure` (engine, bots) prohíbe además el azar y el tiempo implícitos.
+devDependencies (salvo `apps/game/src/testing/` y `src/cli/`, herramientas fuera del build). El perfil ESLint `pure` (engine, bots) prohíbe además el azar y el tiempo implícitos.
 
 ## 4. Modelo de compilación
 
@@ -143,3 +144,44 @@ parámetros de estilo (`personas.ts`) sobre las constantes de ajuste de `tuning.
 de las cartas ocultas; 2.000 partidas contra el aleatorio (≥ 70 %) en cada commit. La DoD completa
 (10.000 partidas y la matriz de personajes) va aparte: `pnpm --filter @31mus/bots sim` (~10 min).
 Cobertura del 100 %.
+
+## 9. Servidor de juego (`apps/game`)
+
+Diseño en `docs/adr/ADR-0004-servidor-de-juego.md`; decisiones de producto D17–D22 en `docs/HITOS.md`.
+
+**Capas.** Colyseus queda en el borde; la lógica de la mesa no depende de él y se prueba con un reloj
+falso:
+
+| Módulo | Responsabilidad |
+|---|---|
+| `rooms/mus-room.ts` | Adaptador de Colyseus: valida cada mensaje con Zod, traduce conexiones (`onJoin`, `onDrop`, `onReconnect`, `onLeave`) y refleja el estado público |
+| `rooms/admission.ts`, `rooms/participants.ts` | Quién entra (código privado, plazas, espectadores ≤ 5) y quién está conectado o caído |
+| `table/table.ts` | Lobby + partida: sentarse, empezar por modo, ceder el asiento al bot y recuperarlo (D7) |
+| `table/lobby.ts` | Asientos, modos y personajes (elegidos al crear; el resto por sorteo, D22) |
+| `table/table-session.ts` | Quién controla cada asiento, pausa sin humanos y cierre por abandono (D20) o tras el fin |
+| `table/match-controller.ts` | Acciones idempotentes (`actionId` + `version`), turnos, bots, pausa entre manos (D19), fin |
+| `table/turn-timers.ts` | Plazo de 30 s con acción por tiempo agotado y retardo de 1–3 s de los bots |
+| `table/outbound.ts` | **Único** sitio que construye lo que recibe cada cliente: `getView` y `getEventView` por destinatario |
+| `chat/room-chat.ts` | Chat y reacciones: saneado, autor puesto por el servidor y límites por usuario (D21) |
+| `match-log/` | Puerto `MatchLogStore` y `MatchRecorder`: cada mano con eventos completos, hora y actor |
+| `infra/` | `Rng` con `crypto.randomInt`, `Scheduler` inyectable, rate-limiter en memoria y pino |
+| `identity/` | Puerto de identidad; en H3 solo la de desarrollo, que se niega a arrancar en producción |
+
+**Qué viaja.** El `Schema` de Colyseus solo tiene datos públicos (modo, estado, asientos con apodo o
+personaje, número de espectadores). La partida va en mensajes por cliente: `game:view` (vista filtrada,
+acciones legales y `deadline`, solo para su asiento), `game:events` (eventos filtrados),
+`game:actionResult`, `room:you`, `room:error`, `chat:message` y `reaction`. Contratos en
+`packages/shared/src/protocol/`.
+
+**Log de partidas.** Contiene cartas: solo vive en el servidor. En H3, memoria (tests) y ficheros JSON
+Lines en `apps/game/.data/match-logs/` (ignorado por git); en H6, Prisma desde `packages/db` (D18).
+
+**Herramientas.** `pnpm --filter @31mus/game play` (cliente de consola contra `pnpm dev`) y
+`pnpm --filter @31mus/game play:script` (partida completa con servidor propio y tiempos cortos).
+Viven en `src/cli/`, fuera del build.
+
+**Pruebas.** Unidad con reloj falso (controlador, turnos, lobby, chat, log); integración con clientes
+reales del SDK (lobby, modos, sala privada, espectadores, turnos, caídas y reconexión, pausa y
+abandono, chat y límites); **test de fuga de información** sobre partidas completas con caídas y
+vueltas, que busca cartas ajenas en todo el JSON recibido por cada cliente; contratos `shared` ↔
+`engine`. Cobertura ≥ 90 % (sin `src/cli/` ni `main.ts`).

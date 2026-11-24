@@ -421,6 +421,9 @@ pnpm infra:down
 Se añaden en su hito:
 
 ```bash
+pnpm --filter @31mus/bots sim          # simulación completa de la DoD de bots, ~10 min (H2)
+pnpm --filter @31mus/game play         # cliente de consola contra `pnpm dev` (H3)
+pnpm --filter @31mus/game play:script  # partida completa con servidor propio y tiempos cortos (H3)
 pnpm test:e2e         # Playwright (H5)
 pnpm db:migrate       # prisma migrate dev (H6)
 pnpm db:seed          # (H6)
