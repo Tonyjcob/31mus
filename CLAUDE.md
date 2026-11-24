@@ -133,8 +133,10 @@ Reglas de dependencia (**se validan con eslint `import/no-restricted-paths` o de
 - Toda entrada externa (mensajes WS, cuerpos REST, query params, env) se valida con **Zod** en `shared`.
 - Nombres de archivo `kebab-case.ts`; componentes React `PascalCase.tsx`.
 - Un componente / módulo = una responsabilidad. Archivos > 300 líneas → dividir.
-- Sin números mágicos: constantes en `packages/shared/src/constants.ts`
-  (`TURN_TIMEOUT_MS = 30_000`, `POINTS_TO_WIN_GAME = 40`, `GAMES_TO_WIN_MATCH = 2`, `MAX_SPECTATORS = 5`…).
+- Sin números mágicos. Constantes de **producto** en `packages/shared/src/constants.ts`
+  (`TURN_TIMEOUT_MS = 30_000`, `MAX_SPECTATORS = 5`…); constantes de **reglas** en
+  `packages/engine/src/rules.ts` (`POINTS_TO_WIN_GAME = 40`, `GAMES_TO_WIN_MATCH = 2`, `MAX_BET = 40`…),
+  porque `engine` no puede importar `shared` (ADR-0002).
 - Textos de UI centralizados en `apps/web/src/i18n/es.ts` (solo español de momento, pero preparado para i18n).
 - Logs estructurados (pino) con `roomId`, `handId`, `userId`. **Nunca** loguear cartas ocultas, contraseñas ni tokens.
 
@@ -153,10 +155,17 @@ API pública mínima:
 
 ```ts
 createMatch(config: MatchConfig, rng: Rng): MatchState
-getLegalActions(state: MatchState, seat: Seat): Action[]
-applyAction(state: MatchState, seat: Seat, action: Action, ctx: { rng: Rng }): Result<{ state: MatchState; events: GameEvent[] }, MusError>
+getLegalActions(state: MatchState, seat: Seat): readonly Action[]
+applyAction(state: MatchState, seat: Seat, action: Action, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
+startNextHand(state: MatchState, ctx: { rng: Rng }): Result<{ state: MatchState; events: readonly GameEvent[] }, MusError>
 getView(state: MatchState, viewer: Seat | 'spectator'): PlayerView   // filtra información oculta
+getEventView(event: GameEvent, viewer: Seat | 'spectator'): GameEvent | null   // filtra cada evento
+getTimeoutAction(state: MatchState, seat: Seat): Action | null
 ```
+
+- Diseño detallado en `docs/adr/ADR-0002-motor-de-reglas.md`. Al acabar una mano el estado queda en
+  `handOver` con las cartas reveladas; el servidor llama a `startNextHand` cuando toca. **Todo evento
+  pasa por `getEventView` antes de salir del servidor.**
 
 - `Seat = 0 | 1 | 2 | 3`. Parejas: **0 y 2** contra **1 y 3**. El orden de juego es **antihorario**
   (`siguiente = (seat + 1) % 4` representa "a la derecha").
