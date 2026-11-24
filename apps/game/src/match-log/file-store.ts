@@ -15,10 +15,15 @@ export class FileMatchLogStore implements MatchLogStore {
 
   constructor(private readonly directory: string) {}
 
-  async startMatch(meta: MatchMeta): Promise<void> {
+  startMatch(meta: MatchMeta): Promise<void> {
     this.ready ??= mkdir(this.directory, { recursive: true });
-    await this.ready;
-    await this.write(meta.matchId, { type: 'start', ...meta });
+    const ready = this.ready;
+    return this.track(
+      (async () => {
+        await ready;
+        await this.write(meta.matchId, { type: 'start', ...meta });
+      })(),
+    );
   }
 
   appendHand(record: HandRecord): Promise<void> {
@@ -29,9 +34,16 @@ export class FileMatchLogStore implements MatchLogStore {
     return this.write(result.matchId, { type: 'finish', ...result });
   }
 
-  /** Se resuelve cuando no queda ninguna escritura en curso (para cerrar sin perder líneas). */
+  /**
+   * Se resuelve cuando no queda ninguna escritura en curso (para cerrar sin perder líneas). Tras
+   * cada tanda se deja pasar una vuelta del bucle de eventos: quien encadena escrituras (la cola
+   * de `MatchRecorder`) pide la siguiente en microtareas, antes de esa vuelta.
+   */
   async idle(): Promise<void> {
-    while (this.pending.size > 0) await Promise.allSettled([...this.pending]);
+    do {
+      await Promise.allSettled([...this.pending]);
+      await new Promise((resolve) => setImmediate(resolve));
+    } while (this.pending.size > 0);
   }
 
   /** Ruta del fichero de una partida. */
@@ -41,9 +53,12 @@ export class FileMatchLogStore implements MatchLogStore {
   }
 
   private write(matchId: string, line: object): Promise<void> {
-    const written = appendFile(this.pathOf(matchId), `${JSON.stringify(line)}\n`, 'utf8');
-    this.pending.add(written);
-    written.finally(() => this.pending.delete(written)).catch(() => undefined); // el error lo trata quien llamó
-    return written;
+    return this.track(appendFile(this.pathOf(matchId), `${JSON.stringify(line)}\n`, 'utf8'));
+  }
+
+  private track(operation: Promise<void>): Promise<void> {
+    this.pending.add(operation);
+    operation.finally(() => this.pending.delete(operation)).catch(() => undefined); // el error lo trata quien llamó
+    return operation;
   }
 }

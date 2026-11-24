@@ -120,7 +120,9 @@ export abstract class MusRoom extends Room<{
     // Varias peticiones pueden pasar `onAuth` a la vez: se vuelve a comprobar ya en orden.
     const refusal = this.admission.refusal(auth.identity.userId, auth.role, client.sessionId);
     if (refusal !== null) throw reject(refusal);
-    this.participants.add({ client, ...auth });
+    // Quien estaba sentado y entra ahora a mirar deja su asiento (al bot, si ya se juega).
+    for (const left of this.participants.add({ client, ...auth }))
+      this.presenceChanged(left, false);
     this.log.info({ userId: auth.identity.userId, role: auth.role }, 'entra en la sala');
     this.arrived(client, auth);
   }

@@ -112,6 +112,14 @@ describe('MatchRecorder', () => {
   });
 });
 
+async function readLines(store: FileMatchLogStore): Promise<{ type: string }[]> {
+  const text = await readFile(store.pathOf('match-1'), 'utf8');
+  return text
+    .trimEnd()
+    .split('\n')
+    .map((line) => JSON.parse(line) as { type: string });
+}
+
 describe('FileMatchLogStore', () => {
   let directory: string | null = null;
 
@@ -127,16 +135,33 @@ describe('FileMatchLogStore', () => {
     while (controller.status !== 'finished') clock.advance(10_000);
     await recorder.flushed();
 
-    const text = await readFile(store.pathOf('match-1'), 'utf8');
-    const lines = text
-      .trimEnd()
-      .split('\n')
-      .map((line) => JSON.parse(line) as { type: string });
+    const lines = await readLines(store);
     expect(lines[0]).toMatchObject({ type: 'start', roomId: 'room-1' });
     expect(lines.at(-1)).toMatchObject({ type: 'finish', end: 'won' });
     const hands = lines.filter((l): l is HandRecord & { type: string } => l.type === 'hand');
     expect(hands.length).toBe(lines.length - 2);
     expect(hands[0]?.steps.length).toBeGreaterThan(1);
+  });
+
+  it('`idle` espera también a lo que la grabadora encola al cerrar (apagado ordenado)', async () => {
+    directory = join(await mkdtemp(join(tmpdir(), '31mus-log-')), 'match-logs');
+    const store = new FileMatchLogStore(directory);
+    const { clock, recorder } = play(store);
+    clock.advance(5_000);
+    await recorder.flushed();
+    recorder.finish('abandoned');
+    await store.idle();
+
+    const lines = await readLines(store);
+    expect(lines.map((l) => l.type)).toEqual(['start', 'hand', 'finish']);
+  });
+
+  it('`idle` cuenta la creación de la carpeta como escritura en curso', async () => {
+    directory = join(await mkdtemp(join(tmpdir(), '31mus-log-')), 'match-logs');
+    const store = new FileMatchLogStore(directory);
+    void store.startMatch(META);
+    await store.idle();
+    expect((await readLines(store)).map((l) => l.type)).toEqual(['start']);
   });
 
   it('no acepta identificadores que no sirven como nombre de fichero', () => {

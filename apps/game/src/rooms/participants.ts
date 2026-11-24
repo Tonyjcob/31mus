@@ -53,17 +53,25 @@ export class Participants {
     return this.values().some((p) => p.identity.userId === userId);
   }
 
-  /** Registra al participante. Si el usuario ya estaba (otra pestaña, una conexión zombi o una
-   * caída a la espera), cierra o abandona la sesión antigua sin que cuente como salida. */
-  add(participant: Omit<Participant, 'dropped'>): void {
+  /**
+   * Registra al participante. Si el usuario ya estaba (otra pestaña, una conexión zombi o una
+   * caída a la espera), cierra o abandona la sesión antigua sin que cuente como salida.
+   * Devuelve las sesiones de jugador conectadas que se sustituyen por otra que no es de jugador
+   * (entra a mirar quien estaba sentado): su asiento se queda sin conexión y hay que avisar.
+   */
+  add(participant: Omit<Participant, 'dropped'>): Participant[] {
+    const leftSeat: Participant[] = [];
     for (const [sessionId, previous] of this.bySession) {
       if (previous.identity.userId !== participant.identity.userId) continue;
       this.bySession.delete(sessionId);
       this.superseded.add(sessionId);
-      if (previous.dropped === null) previous.client.leave(CloseCode.CONSENTED);
-      else previous.dropped.cancel();
+      if (previous.dropped === null) {
+        previous.client.leave(CloseCode.CONSENTED);
+        if (previous.role === 'player' && participant.role !== 'player') leftSeat.push(previous);
+      } else previous.dropped.cancel();
     }
     this.bySession.set(participant.client.sessionId, { ...participant, dropped: null });
+    return leftSeat;
   }
 
   /**

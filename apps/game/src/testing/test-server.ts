@@ -113,8 +113,7 @@ export class TestClient {
   }
 
   static async create(bench: TestBench, options: Record<string, unknown>): Promise<TestClient> {
-    const room = await bench.sdk.create(MUS_ROOM_NAME, options);
-    return new TestClient(room);
+    return TestClient.synced(await bench.sdk.create(MUS_ROOM_NAME, options));
   }
 
   static async join(
@@ -122,8 +121,18 @@ export class TestClient {
     roomId: string,
     options: Record<string, unknown>,
   ): Promise<TestClient> {
-    const room = await bench.sdk.joinById(roomId, options);
-    return new TestClient(room);
+    return TestClient.synced(await bench.sdk.joinById(roomId, options));
+  }
+
+  /** El cliente, cuando ya ha recibido el primer estado de la sala (antes, `state` está vacío). */
+  private static async synced(room: ClientRoom): Promise<TestClient> {
+    const client = new TestClient(room);
+    await waitUntil(() => (client.hasState() ? true : undefined), undefined, 'el primer estado');
+    return client;
+  }
+
+  private hasState(): boolean {
+    return (this.room.state as Partial<PublicRoomState> | undefined)?.seats !== undefined;
   }
 
   get state(): PublicRoomState {

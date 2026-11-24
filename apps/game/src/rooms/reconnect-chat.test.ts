@@ -103,6 +103,27 @@ describe('caída y reconexión (D7)', () => {
     await bea.drop();
     await waitUntil(() => (ana.state.seats.map((s) => s.kind)[1] === 'empty' ? true : undefined));
   });
+
+  it('quien está sentado y entra como espectador deja su asiento al bot', async () => {
+    const [ana] = await duo();
+    const beaWatching = await TestClient.join(bench, ana.roomId, as('bea', { role: 'spectator' }));
+    expect(await beaWatching.waitFor(SERVER_MESSAGES.you)).toMatchObject({
+      role: 'spectator',
+      seat: null,
+    });
+    await waitUntil(() => (seatConnected(ana, 2) === false ? true : undefined));
+    expect(ana.state.spectators).toBe(1);
+  });
+
+  it('en el lobby, quien está sentado y entra como espectador libera el asiento', async () => {
+    const ana = await TestClient.create(bench, as('ana', { mode: '2v2' }));
+    const eva = await TestClient.join(bench, ana.roomId, as('eva', { role: 'spectator' }));
+    ana.send(CLIENT_MESSAGES.takeSeat, { seat: 0 });
+    await waitUntil(() => (eva.state.seats.map((s) => s.kind)[0] === 'human' ? true : undefined));
+    await TestClient.join(bench, ana.roomId, as('ana', { role: 'spectator' }));
+    await waitUntil(() => (eva.state.seats.map((s) => s.kind)[0] === 'empty' ? true : undefined));
+    expect(eva.state.spectators).toBe(2);
+  });
 });
 
 describe('chat y reacciones', () => {
