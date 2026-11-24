@@ -208,5 +208,5 @@ rival en profundidad) que se puede afinar sin cambiar la API.
 4. [x] Bot aleatorio y arnés de simulación.
 5. [x] Bot medio: mus, descarte, envites, respuestas, faroles y marcador.
 6. [x] Catálogo de personajes.
-7. [ ] Configuración `sim`, ejecución de la DoD y `docs/bots/MEDICIONES.md`.
+7. [x] Configuración `sim`, ejecución de la DoD y `docs/bots/MEDICIONES.md`.
 8. [ ] Al cerrar H2: reflejar la API en `docs/ARQUITECTURA.md`.
