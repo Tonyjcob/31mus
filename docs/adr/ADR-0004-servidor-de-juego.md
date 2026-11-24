@@ -52,6 +52,7 @@ filtrado del motor:
 | `game:events` | `{ version, events }` | `getEventView(event, viewer)` de cada evento, quitando los `null` |
 | `game:actionResult` | `{ actionId, ok \| code }` | Respuesta a cada acción |
 | `chat:message`, `reaction` | Mensaje sanitizado con autor y rol | Difusión a toda la sala |
+| `room:you` | `{ role, seat, code }`: quién es el destinatario y, en salas privadas, el código | Al entrar y al cambiar de asiento |
 | `room:error` | Código de error sin detalles internos | — |
 
 - Un único módulo, `outbound.ts`, construye **todos** los mensajes de partida a partir del
@@ -138,9 +139,10 @@ interface MatchLogStore {
 
 - **Lobby y asientos.** Se entra como `player` o `spectator`. El jugador elige un asiento libre; en
   `duo_vs_bots` los dos humanos van en la misma pareja (0/2 o 1/3). La partida empieza cuando están
-  todos los humanos que pide el modo (§7); en `solo`, al sentarse. Antes de empezar se pueden cambiar
-  de asiento y elegir los personajes rivales (y el compañero en `solo`); si nadie los elige, se
-  sortean del catálogo.
+  todos los humanos que pide el modo (§7); en `solo`, al entrar (el creador se sienta en el 0). Antes
+  de empezar se puede cambiar de asiento. Los personajes rivales (y el compañero en `solo`) se eligen
+  **al crear la sala**, porque en `solo` no hay lobby; los que no se eligen se sortean del catálogo,
+  sin repetir personaje en la mesa.
 - **Acciones.** El cliente envía `{ actionId, version, action }`. El servidor rechaza: asiento que no
   está en `pendingSeats`, acción que no está en `getLegalActions` (se compara con `sameAction`),
   `version` distinta de la actual (acción pensada sobre un estado viejo) y `actionId` repetido. Un
@@ -176,13 +178,15 @@ interface MatchLogStore {
   cliente. El cliente lo pinta como texto, nunca como HTML.
 - **Reacciones.** Lista cerrada en `shared`: 👏 😂 😮 😡 🔥 👍 👎 🤔. **3 cada 5 s** por cliente.
 - **Límites globales.** `maxMessagesPerSecond` de Colyseus como red de seguridad (desconecta a quien
-  inunde la sala); `maxClients` = 4 jugadores + 5 espectadores.
+  inunde la sala); `maxClients` con margen sobre jugadores + espectadores, para que quien sobra reciba
+  el error claro de la admisión (`PLAYERS_FULL`, `SPECTATORS_FULL`) y quien vuelve desde otra conexión
+  pueda entrar antes de que se cierre la antigua (que se sustituye).
 - Rate-limits **en memoria** (un solo proceso). Pasan a Redis cuando haya más de un proceso (H7/H10).
 
 ### 7. Contratos en `shared` y constantes
 
 - `shared` define con Zod los mensajes cliente → servidor (`game:action`, `seat:take`, `seat:leave`,
-  `bots:choose`, `chat:send`, `reaction:send`), las opciones de creación y de unión de sala, y los tipos
+  `chat:send`, `reaction:send`), las opciones de creación (con los personajes) y de unión de sala, y los tipos
   de los mensajes servidor → cliente. Las acciones se validan con un esquema Zod de `Action` en `shared`
   y, después, contra `getLegalActions`.
 - Constantes nuevas en `shared/constants.ts`: `HAND_PAUSE_MS = 8_000`, `EMPTY_ROOM_TIMEOUT_MS =
@@ -280,8 +284,8 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 ## Tareas
 
 1. [x] Antonio acepta este ADR y las decisiones D18–D21 (24/11/2026).
-2. [ ] `shared`: esquemas Zod de mensajes y acciones, reacciones y constantes.
-3. [ ] `MusRoom`, `server.ts` y lobby: asientos, modos, personajes, sala privada con código.
+2. [x] `shared`: esquemas Zod de mensajes y acciones, reacciones y constantes.
+3. [x] `MusRoom`, `server.ts` y lobby: asientos, modos, personajes, sala privada con código.
 4. [ ] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
 5. [ ] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
 6. [ ] `MatchLogStore` en memoria y en ficheros.

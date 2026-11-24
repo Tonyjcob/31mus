@@ -35,11 +35,36 @@ export type ClientRole = (typeof CLIENT_ROLES)[number];
 /** Nombre del tipo de sala registrado en Colyseus. */
 export const MUS_ROOM_NAME = 'mus';
 
+/**
+ * Personajes de los bots, elegidos al crear la sala (CLAUDE.md §7): los dos rivales y, en `solo`,
+ * el compañero. Lo que no se elige se sortea. No se puede repetir personaje en una mesa.
+ */
+export const botChoiceSchema = z
+  .strictObject({
+    partner: personaIdSchema.optional(),
+    rivals: z.tuple([personaIdSchema, personaIdSchema]).optional(),
+  })
+  .refine(({ partner, rivals = [] }) => {
+    const ids = partner === undefined ? rivals : [partner, ...rivals];
+    return new Set(ids).size === ids.length;
+  }, 'Personaje repetido');
+export type BotChoice = z.output<typeof botChoiceSchema>;
+
 /** Opciones al crear una sala casual. */
-export const createRoomOptionsSchema = z.object({
-  mode: z.enum(CASUAL_MODES),
-  visibility: z.enum(ROOM_VISIBILITIES).default('public'),
-});
+export const createRoomOptionsSchema = z
+  .object({
+    mode: z.enum(CASUAL_MODES),
+    visibility: z.enum(ROOM_VISIBILITIES).default('public'),
+    bots: botChoiceSchema.default({}),
+  })
+  .refine(({ mode, bots }) => mode === 'solo' || bots.partner === undefined, {
+    message: 'Solo hay compañero bot en el modo solo',
+    path: ['bots', 'partner'],
+  })
+  .refine(({ mode, bots }) => mode !== '2v2' || bots.rivals === undefined, {
+    message: 'En 2 contra 2 no hay bots',
+    path: ['bots', 'rivals'],
+  });
 export type CreateRoomOptions = z.output<typeof createRoomOptionsSchema>;
 
 /** Opciones al unirse a una sala (también al crearla). El código solo se pide en las privadas. */
@@ -64,7 +89,6 @@ export type DevIdentity = z.output<typeof devIdentitySchema>;
 export const CLIENT_MESSAGES = {
   takeSeat: 'seat:take',
   leaveSeat: 'seat:leave',
-  chooseBot: 'bots:choose',
   action: 'game:action',
   chat: 'chat:send',
   reaction: 'reaction:send',
@@ -72,8 +96,6 @@ export const CLIENT_MESSAGES = {
 
 export const takeSeatSchema = z.strictObject({ seat: seatSchema });
 export const leaveSeatSchema = z.strictObject({});
-/** En el lobby: personaje para un asiento de bot (en `solo`, también el compañero). */
-export const chooseBotSchema = z.strictObject({ seat: seatSchema, personaId: personaIdSchema });
 /**
  * Una acción de juego. `actionId` hace la acción idempotente (un reenvío no se aplica dos veces) y
  * `version` es la de la vista sobre la que se decidió: si la partida avanzó, se rechaza.
@@ -87,7 +109,6 @@ export const chatSendSchema = z.strictObject({ text: chatTextSchema });
 export const reactionSendSchema = z.strictObject({ emoji: z.enum(REACTIONS) });
 
 export type TakeSeatMessage = z.output<typeof takeSeatSchema>;
-export type ChooseBotMessage = z.output<typeof chooseBotSchema>;
 export type GameActionMessage = z.output<typeof gameActionSchema>;
 export type ChatSendMessage = z.output<typeof chatSendSchema>;
 export type ReactionSendMessage = z.output<typeof reactionSendSchema>;
@@ -101,7 +122,16 @@ export const SERVER_MESSAGES = {
   chat: 'chat:message',
   reaction: 'reaction',
   error: 'room:error',
+  you: 'room:you',
 } as const;
+
+/** Mensaje privado: quién es el destinatario en la sala. Se reenvía al cambiar de asiento. */
+export interface YouMessage {
+  readonly role: ClientRole;
+  readonly seat: Seat | null;
+  /** Código de la sala privada, para compartirlo; `null` en las públicas. */
+  readonly code: string | null;
+}
 
 /** Vista completa de la partida para un jugador o espectador, tras cada cambio. */
 export interface GameViewMessage {
@@ -166,8 +196,8 @@ export const ROOM_ERROR_CODES = [
   'NOT_A_PLAYER',
   'SEAT_TAKEN',
   'SEAT_NOT_ALLOWED',
-  'NOT_A_BOT_SEAT',
   'UNKNOWN_PERSONA',
+  'INVALID_OPTIONS',
 ] as const;
 export type RoomErrorCode = (typeof ROOM_ERROR_CODES)[number];
 

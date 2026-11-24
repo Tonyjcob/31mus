@@ -5,7 +5,6 @@ import {
   CLIENT_MESSAGES,
   SERVER_MESSAGES,
   chatSendSchema,
-  chooseBotSchema,
   createRoomOptionsSchema,
   devIdentitySchema,
   gameActionSchema,
@@ -18,10 +17,11 @@ import {
 const ACTION_ID = '3f1c2a8e-6b7d-4e0f-9a1b-2c3d4e5f6a7b';
 
 describe('opciones de sala', () => {
-  it('crear: solo modos casuales; pública por defecto', () => {
+  it('crear: solo modos casuales; pública y con bots sorteados por defecto', () => {
     expect(createRoomOptionsSchema.parse({ mode: 'solo' })).toEqual({
       mode: 'solo',
       visibility: 'public',
+      bots: {},
     });
     expect(createRoomOptionsSchema.parse({ mode: '2v2', visibility: 'private' }).visibility).toBe(
       'private',
@@ -49,22 +49,53 @@ describe('opciones de sala', () => {
   });
 });
 
+describe('personajes de los bots al crear', () => {
+  it('solo: compañero y rivales distintos', () => {
+    const bots = { partner: 'abuelo', rivals: ['pollo', 'faraona'] };
+    expect(createRoomOptionsSchema.parse({ mode: 'solo', bots }).bots).toEqual(bots);
+    expect(
+      createRoomOptionsSchema.safeParse({
+        mode: 'solo',
+        bots: { partner: 'pollo', rivals: ['pollo', 'faraona'] },
+      }).success,
+    ).toBe(false);
+    expect(
+      createRoomOptionsSchema.safeParse({ mode: 'solo', bots: { rivals: ['pollo', 'pollo'] } })
+        .success,
+    ).toBe(false);
+  });
+
+  it('duo_vs_bots: rivales sí, compañero no; 2v2: ningún bot', () => {
+    expect(
+      createRoomOptionsSchema.safeParse({ mode: 'duo_vs_bots', bots: { rivals: ['a', 'b'] } })
+        .success,
+    ).toBe(true);
+    expect(
+      createRoomOptionsSchema.safeParse({ mode: 'duo_vs_bots', bots: { partner: 'a' } }).success,
+    ).toBe(false);
+    expect(
+      createRoomOptionsSchema.safeParse({ mode: '2v2', bots: { rivals: ['a', 'b'] } }).success,
+    ).toBe(false);
+    expect(createRoomOptionsSchema.safeParse({ mode: 'solo', bots: { extra: 1 } }).success).toBe(
+      false,
+    );
+    expect(
+      createRoomOptionsSchema.safeParse({ mode: 'solo', bots: { rivals: ['a'] } }).success,
+    ).toBe(false);
+  });
+});
+
 describe('mensajes del cliente', () => {
   it('los nombres de mensaje no se repiten', () => {
     const names = [...Object.values(CLIENT_MESSAGES), ...Object.values(SERVER_MESSAGES)];
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('asiento y bots', () => {
+  it('asientos', () => {
     expect(takeSeatSchema.parse({ seat: 2 })).toEqual({ seat: 2 });
     expect(takeSeatSchema.safeParse({ seat: 4 }).success).toBe(false);
     expect(leaveSeatSchema.parse({})).toEqual({});
     expect(leaveSeatSchema.safeParse({ seat: 1 }).success).toBe(false);
-    expect(chooseBotSchema.parse({ seat: 1, personaId: 'abuelo' })).toEqual({
-      seat: 1,
-      personaId: 'abuelo',
-    });
-    expect(chooseBotSchema.safeParse({ seat: 1, personaId: '<x>' }).success).toBe(false);
   });
 
   it('acción de juego con actionId UUID y versión', () => {

@@ -9,3 +9,5 @@ saveExact: true
 # esbuild (lo usa tsx) descarga y verifica su binario nativo.
 allowBuilds:
   esbuild: true
+  # Acelerador nativo opcional de msgpackr (lo usa Colyseus); sin él funciona en JS puro.
+  msgpackr-extract: false

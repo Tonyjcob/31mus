@@ -1,5 +1,12 @@
 export * from './constants.js';
-export { apiEnvSchema, gameEnvSchema, parseEnv, webEnvSchema } from './env.js';
+export {
+  LOG_LEVELS,
+  NODE_ENVS,
+  apiEnvSchema,
+  gameEnvSchema,
+  parseEnv,
+  webEnvSchema,
+} from './env.js';
 export type { ApiEnv, EnvSource, GameEnv, WebEnv } from './env.js';
 export { actionSchema, betActionSchema, cardSchema, seatSchema } from './protocol/actions.js';
 export {

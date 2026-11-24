@@ -14,6 +14,8 @@ describe('parseEnv', () => {
     expect(parseEnv(gameEnvSchema, {})).toEqual({
       HOST: DEFAULT_HOST,
       GAME_PORT: DEFAULT_GAME_PORT,
+      NODE_ENV: 'development',
+      LOG_LEVEL: 'info',
     });
     expect(parseEnv(webEnvSchema, {})).toEqual({ HOST: DEFAULT_HOST, WEB_PORT: DEFAULT_WEB_PORT });
   });
@@ -47,5 +49,16 @@ describe('parseEnv', () => {
 
   it('rechaza un puerto decimal', () => {
     expect(() => parseEnv(apiEnvSchema, { API_PORT: '30.5' })).toThrow(/API_PORT/);
+  });
+});
+
+describe('gameEnvSchema', () => {
+  it('admite NODE_ENV y LOG_LEVEL conocidos y rechaza el resto', () => {
+    expect(parseEnv(gameEnvSchema, { NODE_ENV: 'production', LOG_LEVEL: 'warn' })).toMatchObject({
+      NODE_ENV: 'production',
+      LOG_LEVEL: 'warn',
+    });
+    expect(() => parseEnv(gameEnvSchema, { NODE_ENV: 'prod' })).toThrow(/NODE_ENV/);
+    expect(() => parseEnv(gameEnvSchema, { LOG_LEVEL: 'verbose' })).toThrow(/LOG_LEVEL/);
   });
 });
