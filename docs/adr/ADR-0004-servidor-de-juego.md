@@ -159,6 +159,9 @@ interface MatchLogStore {
   `userId` hasta el fin de la partida (`allowReconnection(client, 'manual')` para la misma sesión y
   reentrada por `userId` para una nueva). Al volver, recupera el asiento cuando termina la acción en
   curso y recibe su `game:view` completo.
+  Solo se guarda la sesión a un jugador sentado en una partida en curso: en el lobby una caída
+  libera el asiento y un espectador que cae sale (ambos pueden volver a entrar sin más). La sesión
+  caída se abandona si el mismo `userId` entra con otra conexión.
 - **Sala sin humanos conectados (D20).** La partida se **pausa** (`status: 'paused'`, sin turnos ni
   bots). Si vuelve un humano, se reanuda con un deadline nuevo. Si en `EMPTY_ROOM_TIMEOUT_MS`
   (10 min) no vuelve nadie, la sala se cierra y la partida se guarda como abandonada. Con al menos un
@@ -175,10 +178,10 @@ interface MatchLogStore {
   `getView(state, 'spectator')` y los eventos filtrados para `'spectator'` (D17).
 - **Chat.** Un canal para todos: ≤ 200 caracteres, sin caracteres de control, recortado, con rol
   (`player` | `spectator`) y apodo del servidor (nunca el del cliente). **5 mensajes cada 10 s** por
-  cliente. El cliente lo pinta como texto, nunca como HTML.
+  usuario (sobrevive a reconexiones). El cliente lo pinta como texto, nunca como HTML.
 - **Reacciones.** Lista cerrada en `shared`: 👏 😂 😮 😡 🔥 👍 👎 🤔. **3 cada 5 s** por cliente.
-- **Límites globales.** `maxMessagesPerSecond` de Colyseus como red de seguridad (desconecta a quien
-  inunde la sala); `maxClients` con margen sobre jugadores + espectadores, para que quien sobra reciba
+- **Límites globales.** `maxMessagesPerSecond` de Colyseus (`MAX_CLIENT_MESSAGES_PER_SECOND = 20`)
+  como red de seguridad (desconecta a quien inunde la sala); `maxClients` con margen sobre jugadores + espectadores, para que quien sobra reciba
   el error claro de la admisión (`PLAYERS_FULL`, `SPECTATORS_FULL`) y quien vuelve desde otra conexión
   pueda entrar antes de que se cierre la antigua (que se sustituye).
 - Rate-limits **en memoria** (un solo proceso). Pasan a Redis cuando haya más de un proceso (H7/H10).
@@ -287,7 +290,7 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 2. [x] `shared`: esquemas Zod de mensajes y acciones, reacciones y constantes.
 3. [x] `MusRoom`, `server.ts` y lobby: asientos, modos, personajes, sala privada con código.
 4. [x] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
-5. [ ] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
+5. [x] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
 6. [ ] `MatchLogStore` en memoria y en ficheros.
 7. [ ] Cliente de consola y script de partida completa.
 8. [ ] Tests de §8, fuga de información y cobertura ≥ 90 %.

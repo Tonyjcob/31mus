@@ -157,6 +157,18 @@ export class TestClient {
   leave(): Promise<number> {
     return this.room.leave();
   }
+
+  /** Corta la conexión sin despedirse (como una caída de red) y sin reconexión automática. */
+  async drop(): Promise<void> {
+    this.room.reconnection.enabled = false;
+    await this.room.leave(false);
+  }
+
+  /** Vuelve a la misma sesión con el token de reconexión de un cliente caído. */
+  static async reconnect(bench: TestBench, previous: TestClient): Promise<TestClient> {
+    const room = await bench.sdk.reconnect(previous.room.reconnectionToken);
+    return new TestClient(room);
+  }
 }
 
 /** Espera hasta que `probe` devuelva algo distinto de `undefined`. */

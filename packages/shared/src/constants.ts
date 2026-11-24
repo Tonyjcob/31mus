@@ -46,6 +46,12 @@ export const REACTIONS = ['👏', '😂', '😮', '😡', '🔥', '👍', '👎'
 export type Reaction = (typeof REACTIONS)[number];
 export const REACTION_RATE: RateLimit = { max: 3, windowMs: 5_000 };
 
+/**
+ * Red de seguridad de Colyseus (`maxMessagesPerSecond`, ADR-0004 §6): quien envíe más mensajes por
+ * segundo que esto queda desconectado. Muy por encima de lo que necesita un cliente legítimo.
+ */
+export const MAX_CLIENT_MESSAGES_PER_SECOND = 20;
+
 /** Código de las salas privadas: sin 0/O/1/I/L para que no se confundan al dictarlo (D21). */
 export const PRIVATE_CODE_LENGTH = 6;
 export const PRIVATE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
