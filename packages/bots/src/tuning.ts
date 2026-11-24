@@ -5,6 +5,9 @@
  */
 import type { Range } from './odds.js';
 
+/** Valor de un rasgo de estilo que no se aparta del Bot neutro: los rasgos se miden desde aquí. */
+export const NEUTRAL_TRAIT = 0.5;
+
 /** Peso de cada lance en el valor de la mano (decisión de mus y descarte). */
 export const VALUE_WEIGHTS = { grande: 0.3, chica: 0.2, pares: 0.25, juego: 0.25 } as const;
 /** Sin juego, el punto vale menos que el juego en el valor de la mano. */

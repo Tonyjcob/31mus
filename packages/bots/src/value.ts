@@ -13,14 +13,16 @@ const RIVALS = 2;
 const memo = new Map<string, number>();
 
 /**
- * Probabilidad de que la pareja gane `lance` con un compañero cualquiera. En pares, juego y punto
- * el rival que no juega el lance no compite (en grande y chica juegan todos: `share` = 1).
+ * Probabilidad de que la pareja gane `lance` con un compañero cualquiera (en grande y chica juegan
+ * todos: `share` = 1). En pares y juego, el rival que no juega el lance lo pierde. En punto es al
+ * revés: el rival que no lo juega es porque tiene juego, y entonces gana él.
  */
 function lanceWin(lance: Lance, ranks: readonly MusRank[], ties: number): number {
   const stats = lanceStatsOf(lance, ranks);
   if (stats === null) return 0;
   const share = lanceShare(lance);
-  return teamWin(1 - share + share * edge(stats, ties), ANY_HAND, RIVALS);
+  const played = share * edge(stats, ties);
+  return teamWin(lance === 'punto' ? played : 1 - share + played, ANY_HAND, RIVALS);
 }
 
 /** Valor en [0, 1] de una mano de cuatro figuras, con `ties` la parte de los empates que gana. */

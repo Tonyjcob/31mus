@@ -30,7 +30,7 @@ describe('mus', () => {
   });
 
   it('quien tiende a cortar corta antes que quien tiende a pedir mus', () => {
-    const hands = ['Ro 7c 5e 1b', 'Co 6c 4e 1b', 'Ro Sc 6e 4b', 'Ro Rc 6e 5b', 'So 7c 4e 1b'];
+    const hands = ['Ro Cc 7e 1b', 'Ro 7c 7e 4b', 'Ro Sc 6e 4b', 'Ro Rc 6e 5b'];
     const cuts = (who: BotPersona) =>
       hands.filter((h) => decide(musView(h), MUS_LEGAL, who).action.type === 'corto').length;
     expect(cuts(persona({ cutTendency: 1 }))).toBeGreaterThan(cuts(persona({ cutTendency: 0 })));

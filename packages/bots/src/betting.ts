@@ -13,6 +13,7 @@ import {
   BLUFF_PER_MILLE,
   CALL_MARGIN,
   CAUTION_SPREAD,
+  NEUTRAL_TRAIT,
   ORDAGO_CALL_THRESHOLD,
   ORDAGO_PER_MILLE,
   ORDAGO_PRESSURE_SHIFT,
@@ -26,8 +27,8 @@ import {
 } from './tuning.js';
 import type { BotDecision, BotStyle } from './types.js';
 
-/** Desplazamiento de un rasgo respecto al término medio (0,5). */
-const shift = (trait: number) => trait - 0.5;
+/** Desplazamiento de un rasgo respecto al Bot neutro. */
+const shift = (trait: number) => trait - NEUTRAL_TRAIT;
 
 export interface BetContext {
   readonly view: PlayerView;

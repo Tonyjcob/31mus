@@ -8,14 +8,15 @@ import { answerBet, openBet } from './betting.js';
 import { requireAction } from './choose.js';
 import { tieShare } from './odds.js';
 import { lanceWinChance, pressure } from './situation.js';
-import { CUT_STYLE_SPREAD, CUT_THRESHOLD } from './tuning.js';
+import { CUT_STYLE_SPREAD, CUT_THRESHOLD, NEUTRAL_TRAIT } from './tuning.js';
 import type { BotDecision, BotInput } from './types.js';
 import { discardValue, handValue } from './value.js';
 
 type DiscardAction = Extract<Action, { type: 'discard' }>;
 
 function decideMus(view: PlayerView, seat: Seat, hand: readonly Card[], input: BotInput): Action {
-  const threshold = CUT_THRESHOLD - (input.persona.style.cutTendency - 0.5) * CUT_STYLE_SPREAD;
+  const threshold =
+    CUT_THRESHOLD - (input.persona.style.cutTendency - NEUTRAL_TRAIT) * CUT_STYLE_SPREAD;
   const cut = handValue(hand, tieShare(seat, view.mano)) >= threshold;
   return requireAction(input.legal, cut ? 'corto' : 'mus');
 }
