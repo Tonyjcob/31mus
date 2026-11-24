@@ -53,6 +53,27 @@ const PURE_RULES = {
   'no-console': 'error',
 };
 
+/**
+ * Tests y helpers de tests (`src/testing/`) de paquetes sin Node: pueden leer archivos del repo
+ * (p. ej. la tabla de casos del motor, ADR-0002 §10). Solo fs, path y url; el resto de reglas sigue.
+ */
+const TEST_FILES_CONFIG = {
+  files: ['**/*.test.{ts,tsx}', '**/src/testing/**/*.{ts,tsx}'],
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            ...NODE_MODULES_PATTERN,
+            group: [...NODE_MODULES_PATTERN.group, '!node:fs', '!node:path', '!node:url'],
+          },
+        ],
+      },
+    ],
+  },
+};
+
 /** @param {Profile} profile */
 function profileConfig(profile) {
   switch (profile) {
@@ -124,6 +145,7 @@ export function createConfig({ tsconfigRootDir, profile }) {
       },
     },
     profileConfig(profile),
+    ...(profile === 'pure' || profile === 'library' ? [TEST_FILES_CONFIG] : []),
     {
       // Archivos de configuración en JS: sin reglas que necesitan tipos.
       files: ['**/*.{js,cjs,mjs}'],

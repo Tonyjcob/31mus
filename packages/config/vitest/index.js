@@ -31,7 +31,7 @@ export function createVitestConfig({
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}'],
-        exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts'],
+        exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts', 'src/testing/**'],
         reporter: ['text', 'html', 'lcov'],
         ...(thresholds ? { thresholds } : {}),
       },
