@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { devIdentityVerifier } from './identity/dev-identity.js';
 import { silentLogger } from './infra/logger.js';
 import { cryptoRng } from './infra/rng.js';
+import { MemoryMatchLogStore } from './match-log/memory-store.js';
 import { createGameServer } from './server.js';
 import { startTestServer, type TestBench } from './testing/test-server.js';
 
@@ -45,6 +46,7 @@ describe('servidor game', () => {
         identity: devIdentityVerifier,
         rng: cryptoRng,
         logger: silentLogger,
+        matchLog: new MemoryMatchLogStore(),
       }),
     ).toThrow(/producción/);
   });

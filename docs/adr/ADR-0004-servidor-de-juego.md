@@ -127,6 +127,11 @@ interface MatchLogStore {
   logs de pino.
 - **H3**: adaptador en memoria (tests) y adaptador de ficheros JSON Lines para desarrollo
   (`.data/match-logs/`, ignorado por git).
+- Implementación (H3): `MatchRecorder` agrupa en manos los pasos del controlador; cada paso guarda
+  `at`, `actor`, la acción y los eventos que produjo. La mano guarda las cartas repartidas y el marcador
+  antes y después; una mano cortada por el cierre queda con `complete: false`. Cada partida tiene un
+  `matchId` propio (no el `roomId`). Si la sala se cierra sin ganador (abandono o apagado del
+  servidor), la partida queda como `abandoned`. El fichero es `apps/game/.data/match-logs/<matchId>.jsonl`.
 - **H6**: adaptador Prisma en un **paquete de BD compartido** (`packages/db`: cliente de Prisma,
   esquema y repositorios) que usan `api` y `game`. `game` escribe directamente en PostgreSQL, sin
   pasar por la API. **Cambia las reglas de dependencias de CLAUDE.md §4** (aprobado por Antonio):
@@ -291,7 +296,7 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 3. [x] `MusRoom`, `server.ts` y lobby: asientos, modos, personajes, sala privada con código.
 4. [x] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
 5. [x] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
-6. [ ] `MatchLogStore` en memoria y en ficheros.
+6. [x] `MatchLogStore` en memoria y en ficheros.
 7. [ ] Cliente de consola y script de partida completa.
 8. [ ] Tests de §8, fuga de información y cobertura ≥ 90 %.
 9. [ ] Al cerrar H3: `/code-review`, HITOS, `docs/ARQUITECTURA.md` §9 y CLAUDE.md §4/§7.

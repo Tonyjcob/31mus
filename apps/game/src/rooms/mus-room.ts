@@ -15,7 +15,7 @@ import {
   type CreateRoomOptions,
   type MessageAuthor,
 } from '@31mus/shared';
-import { Deferred, Room, ServerError, type AuthContext, type RoomException } from '@colyseus/core';
+import { Room, ServerError, type AuthContext, type RoomException } from '@colyseus/core';
 
 import { RoomChat, type ChatOutcome } from '../chat/room-chat.js';
 import type { Logger } from '../infra/logger.js';
@@ -61,12 +61,14 @@ export abstract class MusRoom extends Room<{
     const { mode, visibility, bots } = parsed.data;
     this.options = parsed.data;
     this.table = new Table({
+      roomId: this.roomId,
       mode,
       bots,
       scheduler,
       rng: this.deps.rng,
       logger: this.log,
       timing: { ...DEFAULT_TABLE_TIMING, ...this.deps.timing },
+      matchLog: this.deps.matchLog,
       recipients: () => this.participants.online().map((p) => this.recipient(p.client)),
       onStatusChange: () => void this.sync(),
       onClose: (end) => {
@@ -131,14 +133,7 @@ export abstract class MusRoom extends Room<{
     const participant = this.participants.get(client.sessionId);
     if (participant?.role !== 'player') return;
     if (this.table.seatInMatch(participant.identity.userId) === null) return;
-    // Puede ser una promesa ya rechazada si la sala se está cerrando: entonces sigue `onLeave`.
-    const reconnection = this.allowReconnection(client, 'manual') as
-      Deferred<MusClient> | Promise<never>;
-    reconnection.catch(() => undefined); // el rechazo lo resuelve `onLeave`
-    if (!(reconnection instanceof Deferred)) return;
-    this.participants.drop(client.sessionId, () => {
-      (reconnection.reject as (reason: unknown) => void)(false);
-    });
+    if (!this.participants.hold(client.sessionId, this.allowReconnection(client, 'manual'))) return;
     this.log.info({ userId: participant.identity.userId }, 'conexión caída');
     this.presenceChanged(participant, false);
     void this.sync();

@@ -2,7 +2,7 @@
 // en una partida empezada cuya conexión cae sigue aquí como «caído» hasta que vuelve con la misma
 // sesión (reconexión de Colyseus) o con otra nueva (reentrada por `userId`), D7.
 import type { ClientRole } from '@31mus/shared';
-import { CloseCode, type Client } from '@colyseus/core';
+import { CloseCode, Deferred, type Client } from '@colyseus/core';
 
 import type { Identity } from '../identity/identity.js';
 
@@ -66,11 +66,20 @@ export class Participants {
     this.bySession.set(participant.client.sessionId, { ...participant, dropped: null });
   }
 
-  /** La conexión de la sesión cayó y se le guarda el sitio. */
-  drop(sessionId: string, cancel: () => void): void {
+  /**
+   * La conexión de la sesión cayó: se le guarda el sitio mientras dure `reconnection` (la de
+   * `allowReconnection`). Devuelve `false` si la sala ya no admite reconexiones (se está cerrando):
+   * entonces la caída cuenta como salida. El rechazo de la reconexión lo resuelve `onLeave`.
+   */
+  hold(sessionId: string, reconnection: Deferred<MusClient> | Promise<never>): boolean {
+    reconnection.catch(() => undefined);
     const participant = this.bySession.get(sessionId);
-    if (participant !== undefined)
-      this.bySession.set(sessionId, { ...participant, dropped: { cancel } });
+    if (participant === undefined || !(reconnection instanceof Deferred)) return false;
+    const cancel = (): void => {
+      (reconnection.reject as (reason: unknown) => void)(false);
+    };
+    this.bySession.set(sessionId, { ...participant, dropped: { cancel } });
+    return true;
   }
 
   /** La sesión caída volvió con una conexión nueva. Devuelve el participante, o `null`. */

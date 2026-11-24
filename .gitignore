@@ -29,6 +29,9 @@ blob-report/
 .docker-data/
 infra/docker/data/
 
+# Datos locales de desarrollo (log de partidas con cartas, ADR-0004 §4)
+.data/
+
 # Claves y certificados
 *.pem
 *.key

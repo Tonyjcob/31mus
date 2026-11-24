@@ -16,6 +16,7 @@ import { ColyseusTestServer } from '@colyseus/testing';
 
 import { devIdentityVerifier } from '../identity/dev-identity.js';
 import { silentLogger } from '../infra/logger.js';
+import { MemoryMatchLogStore } from '../match-log/memory-store.js';
 import { createGameServer, type GameServerOptions } from '../server.js';
 
 const BASE_PORT = 25_680;
@@ -36,6 +37,7 @@ export async function startTestServer(
     identity: devIdentityVerifier,
     rng: createSeededRng(1),
     logger: silentLogger,
+    matchLog: new MemoryMatchLogStore(),
     ...overrides,
   });
   await server.listen(port, '127.0.0.1');

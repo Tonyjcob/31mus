@@ -10,6 +10,7 @@ import {
 } from '@31mus/shared';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { MemoryMatchLogStore } from '../match-log/memory-store.js';
 import type { TableTiming } from '../table/table-session.js';
 import {
   TestClient,
@@ -29,9 +30,10 @@ const TIMING: TableTiming = {
 };
 
 let bench: TestBench;
+const matchLog = new MemoryMatchLogStore();
 
 beforeAll(async () => {
-  bench = await startTestServer({ timing: TIMING });
+  bench = await startTestServer({ timing: TIMING, matchLog });
 });
 
 afterEach(async () => {
@@ -62,6 +64,18 @@ describe('partida completa', () => {
     const versions = ana.messages<{ version: number }>(SERVER_MESSAGES.view).map((v) => v.version);
     expect([...versions].sort((a, b) => a - b)).toEqual(versions);
     await waitUntil(() => ana.leftWith ?? undefined, 2_000, 'el cierre de la sala');
+
+    // El log guarda cada mano y el resultado (ADR-0004 §4).
+    const logged = matchLog.all().find((m) => m.meta.roomId === ana.roomId);
+    expect(logged?.meta.seats[0]).toMatchObject({ kind: 'human', userId: 'ana' });
+    expect(logged?.hands.length).toBe(events.filter((e) => e.type === 'handStarted').length + 1);
+    expect(logged?.hands.every((h) => h.complete)).toBe(true);
+    expect(
+      logged?.hands
+        .flatMap((h) => h.steps)
+        .some((s) => 'seat' in s.actor && s.actor.seat === 0 && s.actor.by === 'human'),
+    ).toBe(true);
+    expect(logged?.result).toMatchObject({ end: 'won', hands: logged?.hands.length });
   }, 90_000);
 
   it('si el jugador no hace nada, juega el temporizador por él y la partida avanza', async () => {
@@ -168,5 +182,7 @@ describe('abandono y vuelta (D7, D20)', () => {
     await ana.leave();
     await bea.leave();
     await waitUntil(() => eva.leftWith ?? undefined, 3_000, 'el cierre por abandono');
+    const logged = matchLog.all().find((m) => m.meta.roomId === eva.roomId);
+    expect(logged?.result).toMatchObject({ end: 'abandoned', winner: null });
   });
 });

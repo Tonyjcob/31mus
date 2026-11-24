@@ -5,6 +5,7 @@ import { ErrorCode, ServerError } from '@colyseus/core';
 
 import type { IdentityVerifier } from '../identity/identity.js';
 import type { Logger } from '../infra/logger.js';
+import type { MatchLogStore } from '../match-log/match-log.js';
 import type { TableTiming } from '../table/table-session.js';
 
 /** Dependencias que inyecta el servidor (nunca vienen del cliente). */
@@ -12,6 +13,8 @@ export interface MusRoomDeps {
   readonly identity: IdentityVerifier;
   readonly rng: Rng;
   readonly logger: Logger;
+  /** Dónde se guarda el log de cada partida (ADR-0004 §4). */
+  readonly matchLog: MatchLogStore;
   /** Tiempos de la mesa; los tests los acortan. */
   readonly timing?: Partial<TableTiming>;
 }
