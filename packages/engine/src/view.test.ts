@@ -45,7 +45,7 @@ describe('getView (§9)', () => {
     expect(getView(cut, 0).reshuffleWarning).toBe(false);
   });
 
-  it('al terminar la mano, los jugadores ven las cuatro manos; el espectador no (D16)', () => {
+  it('al terminar la mano, jugadores y espectadores ven las cuatro manos (D16, D17)', () => {
     expect(getView(state, 0).revealedHands).toBeNull();
     const ended = play(stateWith({ ...BASE, scores: [39, 0] }), [
       [0, act.corto],
@@ -54,7 +54,7 @@ describe('getView (§9)', () => {
       [3, act.noQuiero],
     ]).state;
     expect(getView(ended, 2).revealedHands).toEqual(ended.hand.hands);
-    expect(getView(ended, 'spectator').revealedHands).toBeNull();
+    expect(getView(ended, 'spectator').revealedHands).toEqual(ended.hand.hands);
   });
 });
 
@@ -67,10 +67,10 @@ describe('getEventView', () => {
     expect(getEventView(dealt, 'spectator')).toEqual({ ...dealt, cards: null });
   });
 
-  it('las manos enseñadas no llegan a los espectadores', () => {
+  it('las manos enseñadas llegan a jugadores y espectadores (D17)', () => {
     const revealed: GameEvent = { type: 'handRevealed', hands: state.hand.hands };
     expect(getEventView(revealed, 3)).toEqual(revealed);
-    expect(getEventView(revealed, 'spectator')).toEqual({ type: 'handRevealed', hands: null });
+    expect(getEventView(revealed, 'spectator')).toEqual(revealed);
   });
 
   it('ningún evento filtrado de una partida lleva cartas ajenas', () => {

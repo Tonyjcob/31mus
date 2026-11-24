@@ -79,12 +79,11 @@ function checkInformation({ before, after, events }: Transition): void {
     const own = new Set<Card>(
       viewer === 'spectator' ? [] : [...before.hand.hands[viewer], ...after.hand.hands[viewer]],
     );
-    const viewAllowed = revealed && viewer !== 'spectator' ? new Set(FULL_DECK) : own;
+    const viewAllowed = revealed ? new Set(FULL_DECK) : own;
     expectOnly(JSON.stringify(getView(after, viewer)), viewAllowed, `vista de ${String(viewer)}`);
     for (const event of events) {
       const filtered = getEventView(event, viewer);
-      const allowed =
-        event.type === 'handRevealed' && viewer !== 'spectator' ? new Set(FULL_DECK) : own;
+      const allowed = event.type === 'handRevealed' ? new Set(FULL_DECK) : own;
       expectOnly(JSON.stringify(filtered), allowed, `evento ${event.type} para ${String(viewer)}`);
     }
   }

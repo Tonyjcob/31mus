@@ -50,15 +50,15 @@ export type GameEvent =
     }
   | { readonly type: 'gameWon'; readonly team: Team; readonly gameNumber: number }
   | { readonly type: 'matchWon'; readonly team: Team }
-  /** Fin de mano: los cuatro enseñan sus cartas (D16). `null` para espectadores. */
-  | { readonly type: 'handRevealed'; readonly hands: PerSeat<readonly Card[]> | null }
+  /** Fin de mano: los cuatro enseñan sus cartas (D16); las ven jugadores y espectadores (D17). */
+  | { readonly type: 'handRevealed'; readonly hands: PerSeat<readonly Card[]> }
   | { readonly type: 'handEnded' };
 
 export type Viewer = Seat | 'spectator';
 
 /**
  * Versión de un evento que puede ver `viewer`: tapa las cartas ajenas. Los espectadores no ven
- * ninguna carta, tampoco las enseñadas al final de la mano (CLAUDE.md §7).
+ * ninguna carta salvo las enseñadas al final de la mano (D17).
  * Devuelve `null` si el evento no debe llegarle (hoy ninguno; se deja por contrato).
  */
 export function getEventView(event: GameEvent, viewer: Viewer): GameEvent | null {
@@ -68,7 +68,6 @@ export function getEventView(event: GameEvent, viewer: Viewer): GameEvent | null
     case 'discardSubmitted':
       return viewer === event.seat ? event : { ...event, cards: null };
     case 'handRevealed':
-      return viewer === 'spectator' ? { ...event, hands: null } : event;
     case 'handStarted':
     case 'musSpoken':
     case 'discardsRevealed':

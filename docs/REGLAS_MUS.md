@@ -1,7 +1,7 @@
 # Reglas del mus — especificación de 31mus
 
 > Fuente de verdad para `packages/engine`. Cada regla debe tener al menos un test.
-> Todas las decisiones están confirmadas por Antonio (D1–D4, 19/11/2026; D10–D16, 23/11/2026; ver `HITOS.md`).
+> Todas las decisiones están confirmadas por Antonio (D1–D4, 19/11/2026; D10–D16, 23/11/2026; D17, 24/11/2026; ver `HITOS.md`).
 > Criterio: **reglamentos oficiales** (FEM y La Federación). Si aparece una ambigüedad nueva, parar y preguntar.
 
 ## 1. Configuración
@@ -169,6 +169,7 @@ Lo expone el motor con `getTimeoutAction(state, seat)`:
 ## 9. Información visible
 - **Jugador**: sus cartas, el número de cartas de los demás, declaraciones, envites, marcador y su
   propio descarte (de los demás, solo cuántas cartas descartaron).
-- **Espectador**: lo mismo que un jugador **pero sin ninguna carta**.
+- **Espectador**: lo mismo que un jugador **pero sin ninguna carta** hasta el fin de mano; entonces
+  ve las de los cuatro, como los jugadores (D17).
 - **Aviso de rebarajado** (D10): visible para todos mientras dure.
 - **Fin de mano**: se revelan las cartas de los cuatro jugadores (D16), también tras un órdago aceptado.

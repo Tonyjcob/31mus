@@ -38,8 +38,8 @@ de las pantallas sí se implementan desde H4 siguiendo el diseño de Figma (§13
    valida contra el motor de reglas y emite el nuevo estado. Nunca se confía en nada del cliente.
 2. **Información oculta = nunca sale del servidor.** Un cliente solo recibe **sus propias cartas**.
    Las cartas de los demás, el mazo y los descartes ajenos **jamás** se serializan hacia ese cliente,
-   tampoco hacia espectadores. Al final de la mano solo se revelan las cartas que las reglas obligan a
-   mostrar para el recuento. Hay tests que lo verifican (ver §9).
+   tampoco hacia espectadores. Al final de la mano se revelan las cartas de los cuatro (D16), también
+   a los espectadores (D17). Hay tests que lo verifican (ver §9).
 3. **Motor de reglas puro.** `packages/engine` no tiene I/O, ni red, ni `Date.now()`, ni `Math.random()`.
    El azar y el tiempo se inyectan. Mismo estado + misma acción + misma semilla = mismo resultado.
 4. **Barajado criptográficamente seguro** en producción: Fisher–Yates con `crypto.randomInt`.
@@ -193,7 +193,8 @@ getTimeoutAction(state: MatchState, seat: Seat): Action | null
 - **Salas privadas**: aparecen en el listado, pero unirse (como jugador o espectador) requiere el código
   de 6 caracteres generado al crearla. Código comparado en tiempo constante; rate-limit de intentos.
 - **Espectadores**: máximo 5 por sala. Reciben `getView(state, 'spectator')`: mesa, marcador, amarracos,
-  envites y número de cartas, **nunca cartas**. Pueden chatear y reaccionar.
+  envites y número de cartas; **ninguna carta** hasta el fin de mano, cuando ven las de los cuatro (D17).
+  Pueden chatear y reaccionar.
 - **Chat**: único para jugadores y espectadores. Mensajes ≤ 200 caracteres, sanitizados, rate-limit
   (p. ej. 5 msg / 10 s), etiqueta de rol (jugador/espectador).
 - **Reacciones**: emojis de una lista cerrada (definida en `shared`), mostrados como emojis flotantes.

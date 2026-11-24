@@ -1,7 +1,7 @@
 /**
  * Vista de la partida para un jugador o espectador (REGLAS_MUS.md §9, ADR-0002 §3). Es la única
- * forma en que el estado sale del servidor: nunca incluye cartas ajenas antes del fin de mano, y
- * a los espectadores no les da ninguna carta (CLAUDE.md §7).
+ * forma en que el estado sale del servidor: nunca incluye cartas ajenas antes del fin de mano. Los
+ * espectadores no ven ninguna carta hasta entonces; al final, las cuatro manos como todos (D17).
  */
 import type { Card } from './cards.js';
 import type { Lance } from './evaluators/lances.js';
@@ -84,6 +84,6 @@ export function getView(state: MatchState, viewer: Viewer): PlayerView {
     lastDiscardCounts: hand.lastDiscardCounts,
     declarations: hand.declarations,
     lances: hand.lances,
-    revealedHands: isPlayer && phase.kind === 'handOver' ? hand.hands : null,
+    revealedHands: phase.kind === 'handOver' ? hand.hands : null,
   };
 }

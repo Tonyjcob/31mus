@@ -8,7 +8,7 @@
 
 ## Decisiones de producto
 
-D1–D9 confirmadas el 19 y el 20/11/2026; D10–D16, el 23/11/2026. Criterio para las reglas: **reglamentos
+D1–D9 confirmadas el 19 y el 20/11/2026; D10–D16, el 23/11/2026; D17, el 24/11/2026. Criterio para las reglas: **reglamentos
 oficiales** (FEM y La Federación; Las40 como referencia online), no costumbres de mesa.
 
 | # | Decisión | Resuelto |
@@ -29,6 +29,7 @@ oficiales** (FEM y La Federación; Las40 como referencia online), no costumbres 
 | D14 | Apuesta máxima | **40 tantos** en total por lance; para más, órdago |
 | D15 | Descarte por tiempo agotado | La primera carta que **no forme pareja** en el orden 4, 5, 6, 7, S, C, A, R; si todas forman jugada, la primera en ese mismo orden |
 | D16 | Fin de mano | **Los cuatro enseñan todas sus cartas** (LaFed art. 69), también con órdago aceptado. Grande y chica en paso: 1 tanto al ganador en el recuento |
+| D17 | Espectadores al final de la mano | Ven las cartas que enseñan los cuatro (D16), igual que los jugadores. Antes del fin de mano, ninguna carta (24/11/2026) |
 
 ---
 
