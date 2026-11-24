@@ -12,7 +12,7 @@
     "play:script": "tsx --env-file-if-exists=../../.env src/cli/play-script.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings=0",
-    "test": "vitest run"
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@31mus/bots": "workspace:*",
