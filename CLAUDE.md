@@ -91,6 +91,7 @@ No añadir dependencias nuevas sin justificarlo en el commit. Preferir pocas y m
 │  ├─ engine/         # Reglas del mus (puro, sin I/O)
 │  ├─ bots/           # IA de bots (dificultad media, faroles) y personajes (perfiles de estilo)
 │  ├─ shared/         # Tipos, esquemas Zod, mensajes cliente↔servidor, constantes
+│  ├─ db/             # Prisma: esquema, migraciones y repositorios (desde H6, D18)
 │  ├─ design-tokens/  # Tokens de diseño volcados desde las variables de Figma
 │  └─ config/         # tsconfig, eslint, prettier, vitest base
 ├─ infra/
@@ -114,8 +115,9 @@ Reglas de dependencia (**se validan con eslint `import/no-restricted-paths` o de
 - `engine` → no depende de nada del monorepo.
 - `bots` → solo `engine`.
 - `shared` → puede importar tipos de `engine`.
-- `game` → `engine`, `bots`, `shared`.
-- `api` → `shared`.
+- `game` → `engine`, `bots`, `shared` y, desde H6, `db`.
+- `api` → `shared` y, desde H6, `db`.
+- `db` (H6: Prisma, esquema y repositorios compartidos por `api` y `game`) → solo tipos de `shared` (D18, ADR-0004).
 - `web` → `shared`, `design-tokens`, y **solo tipos/utilidades de presentación** de `engine`
   (p. ej. nombres de cartas). **Nunca** lógica de validación como fuente de verdad.
 
@@ -218,8 +220,8 @@ getTimeoutAction(state: MatchState, seat: Seat): Action | null
   Catálogo inicial en `docs/HITOS.md` (H2). En `solo` y `duo_vs_bots` el jugador elige los personajes rivales
   (y el compañero en `solo`); al sustituir a un humano que se va, se usa un personaje neutro.
 - **Turno de 30 s**: timer en servidor; el cliente solo muestra una cuenta atrás con `deadline` enviado por el servidor.
-- Al terminar la partida: persistir resultado + log de eventos vía API interna (o directamente con Prisma
-  desde un módulo compartido de persistencia; decidir en ADR en H3).
+- Cada mano y el resultado de la partida se persisten tras el puerto `MatchLogStore`: memoria y ficheros
+  en H3; desde H6, directamente con Prisma desde `packages/db` (D18, ADR-0004).
 
 ## 8. API (`apps/api`)
 
