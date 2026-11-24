@@ -1,8 +1,16 @@
 // Banco de pruebas de integración (ADR-0004 §8): un servidor real con clientes reales del SDK.
 // Cada archivo de test corre en su propio proceso de Vitest; el puerto sale del id del proceso
 // para que varios archivos no choquen.
-import { createSeededRng } from '@31mus/engine';
-import { MUS_ROOM_NAME, SERVER_MESSAGES, type YouMessage } from '@31mus/shared';
+import { randomUUID } from 'node:crypto';
+
+import { createSeededRng, type Action, type Rng } from '@31mus/engine';
+import {
+  CLIENT_MESSAGES,
+  MUS_ROOM_NAME,
+  SERVER_MESSAGES,
+  type GameViewMessage,
+  type YouMessage,
+} from '@31mus/shared';
 import { ColyseusSDK, type Room as ClientRoom } from '@colyseus/sdk';
 import { ColyseusTestServer } from '@colyseus/testing';
 
@@ -59,11 +67,47 @@ export interface PublicRoomState {
 /** Cliente de prueba que guarda todo lo que recibe, en orden. */
 export class TestClient {
   readonly received: { type: string; payload: unknown }[] = [];
+  private autoRng: Rng | null = null;
+  /** Código de cierre si la sala echó o cerró la conexión. */
+  leftWith: number | null = null;
 
   private constructor(readonly room: ClientRoom) {
+    room.onLeave((code) => {
+      this.leftWith = code;
+    });
     room.onMessage('*', (type, payload) => {
       this.received.push({ type: String(type), payload });
+      if (type === SERVER_MESSAGES.view) this.maybeAutoPlay(payload as GameViewMessage);
     });
+  }
+
+  /** Juega solo: ante cada vista con acciones legales, envía una al azar. */
+  autoPlay(rng: Rng): void {
+    this.autoRng = rng;
+    const view = this.messages<GameViewMessage>(SERVER_MESSAGES.view).at(-1);
+    if (view !== undefined) this.maybeAutoPlay(view);
+  }
+
+  stopAutoPlay(): void {
+    this.autoRng = null;
+  }
+
+  /** Envía una acción de juego con un `actionId` nuevo. */
+  act(action: Action, version: number): string {
+    const actionId = randomUUID();
+    this.send(CLIENT_MESSAGES.action, { actionId, version, action });
+    return actionId;
+  }
+
+  /** Última vista de la partida recibida. */
+  view(): GameViewMessage | undefined {
+    return this.messages<GameViewMessage>(SERVER_MESSAGES.view).at(-1);
+  }
+
+  private maybeAutoPlay(message: GameViewMessage): void {
+    if (this.autoRng === null || message.legal.length === 0) return;
+    const action = message.legal[this.autoRng.nextInt(message.legal.length)];
+    if (action !== undefined) this.act(action, message.version);
   }
 
   static async create(bench: TestBench, options: Record<string, unknown>): Promise<TestClient> {

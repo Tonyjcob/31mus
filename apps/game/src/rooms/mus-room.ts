@@ -1,78 +1,35 @@
 // Sala de mus en Colyseus (CLAUDE.md §7, ADR-0004). Adaptador fino: valida la entrada con Zod,
-// delega en `Lobby` (y desde la tarea 4 en `MatchController`) y refleja el estado público.
+// delega en `Admission` (quién entra), `Lobby` (asientos) y `TableSession` (partida), y refleja el
+// estado público.
 import { BOT_PERSONAS } from '@31mus/bots';
-import type { Rng, Seat } from '@31mus/engine';
+import type { Seat, Viewer } from '@31mus/engine';
 import {
   CLIENT_MESSAGES,
   MAX_SPECTATORS,
-  PRIVATE_CODE_MAX_FAILS,
   SERVER_MESSAGES,
   createRoomOptionsSchema,
+  gameActionSchema,
   joinRoomOptionsSchema,
   takeSeatSchema,
-  type BotChoice,
-  type ClientRole,
+  type ActionResultMessage,
   type CreateRoomOptions,
   type RoomErrorCode,
   type RoomErrorMessage,
-  type RoomMode,
-  type RoomStatus,
-  type RoomVisibility,
   type YouMessage,
 } from '@31mus/shared';
-import {
-  CloseCode,
-  ErrorCode,
-  Room,
-  ServerError,
-  type AuthContext,
-  type Client,
-  type RoomException,
-} from '@colyseus/core';
+import { Room, ServerError, type AuthContext, type RoomException } from '@colyseus/core';
 
-import type { Identity, IdentityVerifier } from '../identity/identity.js';
 import type { Logger } from '../infra/logger.js';
-import { RateLimiter } from '../infra/rate-limiter.js';
 import { clockScheduler, type Scheduler } from '../infra/scheduler.js';
-import { codeMatches, generatePrivateCode } from '../private-code.js';
-import { HUMANS_REQUIRED, Lobby, type SeatOccupant } from '../table/lobby.js';
-import { MusRoomState, SeatState } from './room-state.js';
+import { HUMANS_REQUIRED, Lobby } from '../table/lobby.js';
+import { DEFAULT_TABLE_TIMING, TableSession, type Recipient } from '../table/table-session.js';
+import { Admission } from './admission.js';
+import { Participants, type ClientAuth, type MusClient, type Participant } from './participants.js';
+import { MusRoomState, SeatState, seatFields } from './room-state.js';
+import { reject, type MusRoomDeps, type MusRoomMetadata } from './room-types.js';
 
-/** Dependencias que inyecta el servidor (nunca vienen del cliente). */
-export interface MusRoomDeps {
-  readonly identity: IdentityVerifier;
-  readonly rng: Rng;
-  readonly logger: Logger;
-}
-
-/** Lo que `onAuth` deja en `client.auth`. */
-export interface ClientAuth {
-  readonly identity: Identity;
-  readonly role: ClientRole;
-}
-
-/** Metadatos de la sala para el listado (CLAUDE.md §7). */
-export interface MusRoomMetadata {
-  readonly mode: RoomMode;
-  readonly visibility: RoomVisibility;
-  readonly hasCode: boolean;
-  readonly seatsTaken: number;
-  readonly spectators: number;
-  readonly status: RoomStatus;
-}
-
-type MusClient = Client<{ auth: ClientAuth }>;
-
-interface Participant {
-  readonly client: MusClient;
-  readonly identity: Identity;
-  readonly role: ClientRole;
-}
-
-/** Rechazo al unirse: el cliente recibe el código de error en el mensaje. */
-function reject(code: RoomErrorCode): ServerError {
-  return new ServerError(ErrorCode.AUTH_FAILED, code);
-}
+export type { ClientAuth } from './participants.js';
+export type { MusRoomDeps, MusRoomMetadata } from './room-types.js';
 
 export abstract class MusRoom extends Room<{
   state: MusRoomState;
@@ -81,16 +38,13 @@ export abstract class MusRoom extends Room<{
 }> {
   protected abstract readonly deps: MusRoomDeps;
 
-  protected lobby!: Lobby;
-  protected scheduler!: Scheduler;
-  protected log!: Logger;
+  private log!: Logger;
+  private scheduler!: Scheduler;
   private options!: CreateRoomOptions;
-  private code: string | null = null;
-  private creatorUserId = '';
-  private codeFailures!: RateLimiter;
-  private readonly participants = new Map<string, Participant>();
-  /** Sesiones sustituidas por una conexión nueva del mismo usuario: su salida no cuenta. */
-  private readonly superseded = new Set<string>();
+  private lobby!: Lobby;
+  private admission!: Admission;
+  private session: TableSession | null = null;
+  private readonly participants = new Participants();
 
   override async onCreate(rawOptions: unknown): Promise<void> {
     this.log = this.deps.logger.child({ roomId: this.roomId });
@@ -104,35 +58,30 @@ export abstract class MusRoom extends Room<{
     const creator = await this.deps.identity.verify(rawOptions);
     if (creator === null) throw reject('INVALID_IDENTITY');
 
+    const { mode, visibility } = parsed.data;
     this.options = parsed.data;
-    this.creatorUserId = creator.userId;
-    this.lobby = new Lobby(parsed.data.mode);
-    this.codeFailures = new RateLimiter(PRIVATE_CODE_MAX_FAILS, this.scheduler);
-    if (parsed.data.visibility === 'private') this.code = generatePrivateCode(this.deps.rng);
-    // Los límites reales los aplica `admissionError` con un error claro. Este tope es solo una red
-    // de seguridad con margen para la conexión nueva de quien vuelve antes de cerrar la antigua.
-    this.maxClients = 2 * HUMANS_REQUIRED[parsed.data.mode] + MAX_SPECTATORS + 1;
+    this.lobby = new Lobby(mode);
+    this.admission = new Admission({
+      lobby: this.lobby,
+      participants: this.participants,
+      scheduler: this.scheduler,
+      rng: this.deps.rng,
+      isPrivate: visibility === 'private',
+      creatorUserId: creator.userId,
+    });
+    // Los límites reales los aplica `Admission` con un error claro. Este tope es solo una red de
+    // seguridad con margen para la conexión nueva de quien vuelve antes de cerrar la antigua.
+    this.maxClients = 2 * HUMANS_REQUIRED[mode] + MAX_SPECTATORS + 1;
     this.state = new MusRoomState({
-      mode: parsed.data.mode,
-      visibility: parsed.data.visibility,
+      mode,
+      visibility,
       status: 'lobby',
       seats: [0, 1, 2, 3].map(() => new SeatState(seatFields({ kind: 'empty' }))),
       spectators: 0,
     });
-
-    this.onMessage(CLIENT_MESSAGES.takeSeat, (client: MusClient, payload: unknown) => {
-      const message = takeSeatSchema.safeParse(payload);
-      if (message.success) this.handleTakeSeat(client, message.data.seat);
-      else this.sendError(client, 'INVALID_MESSAGE');
-    });
-    this.onMessage(CLIENT_MESSAGES.leaveSeat, (client: MusClient) => {
-      this.handleLeaveSeat(client);
-    });
-    this.onMessage('*', (client: MusClient) => {
-      this.sendError(client, 'INVALID_MESSAGE');
-    });
+    this.registerMessages();
     await this.sync();
-    this.log.info({ mode: parsed.data.mode, visibility: parsed.data.visibility }, 'sala creada');
+    this.log.info({ mode, visibility }, 'sala creada');
   }
 
   override async onAuth(_client: MusClient, options: unknown, context: AuthContext) {
@@ -140,15 +89,9 @@ export abstract class MusRoom extends Room<{
     if (identity === null) throw reject('INVALID_IDENTITY');
     const join = joinRoomOptionsSchema.safeParse(options);
     if (!join.success) throw reject('INVALID_OPTIONS');
-    if (this.code !== null && !this.knows(identity.userId)) {
-      const key = context.ip ?? 'desconocida';
-      if (this.codeFailures.isLimited(key)) throw reject('TOO_MANY_ATTEMPTS');
-      if (!codeMatches(this.code, join.data.code)) {
-        this.codeFailures.record(key);
-        throw reject('WRONG_CODE');
-      }
-    }
-    const refusal = this.admissionError(identity.userId, join.data.role);
+    const refusal =
+      this.admission.checkCode(identity.userId, context.ip ?? 'desconocida', join.data.code) ??
+      this.admission.refusal(identity.userId, join.data.role);
     if (refusal !== null) throw reject(refusal);
     return { identity, role: join.data.role } satisfies ClientAuth;
   }
@@ -158,35 +101,42 @@ export abstract class MusRoom extends Room<{
     /* v8 ignore next -- `onAuth` siempre deja `auth`. */
     if (auth === undefined) throw reject('INVALID_IDENTITY');
     // Varias peticiones pueden pasar `onAuth` a la vez: se vuelve a comprobar ya en orden.
-    const refusal = this.admissionError(auth.identity.userId, auth.role, client.sessionId);
+    const refusal = this.admission.refusal(auth.identity.userId, auth.role, client.sessionId);
     if (refusal !== null) throw reject(refusal);
-    this.replacePreviousSession(auth.identity.userId);
-    this.participants.set(client.sessionId, { client, ...auth });
+    this.participants.add({ client, ...auth });
 
-    if (auth.role === 'player') {
-      if (this.lobby.isStarted) {
-        this.lobby.setConnected(auth.identity.userId, true);
-      } else if (this.lobby.mode === 'solo' && this.lobby.seatOf(auth.identity.userId) === null) {
-        this.lobby.takeSeat(auth.identity.userId, auth.identity.nickname, 0);
-      }
+    const { userId, nickname } = auth.identity;
+    const seat = this.lobby.seatOf(userId);
+    if (auth.role === 'player' && this.lobby.isStarted && seat !== null) {
+      this.lobby.setConnected(userId, true);
+      this.session?.connectionChanged(seat);
+    } else if (auth.role === 'player' && this.lobby.mode === 'solo' && seat === null) {
+      this.lobby.takeSeat(userId, nickname, 0);
     }
-    this.log.info({ userId: auth.identity.userId, role: auth.role }, 'entra en la sala');
+    this.log.info({ userId, role: auth.role }, 'entra en la sala');
     this.sendYou(client);
+    this.session?.sendCurrent(this.recipient(client));
     this.maybeStart();
     void this.sync();
   }
 
   override onLeave(client: MusClient): void {
-    const participant = this.participants.get(client.sessionId);
-    this.participants.delete(client.sessionId);
-    if (this.superseded.delete(client.sessionId) || participant === undefined) return;
+    const participant = this.participants.remove(client.sessionId);
+    if (participant === null) return;
     const { userId } = participant.identity;
-    if (participant.role === 'player') {
-      if (this.lobby.isStarted) this.lobby.setConnected(userId, false);
-      else this.lobby.leaveSeat(userId);
+    const seat = this.lobby.seatOf(userId);
+    if (participant.role === 'player' && this.lobby.isStarted && seat !== null) {
+      this.lobby.setConnected(userId, false);
+      this.session?.connectionChanged(seat);
+    } else if (participant.role === 'player') {
+      this.lobby.leaveSeat(userId);
     }
     this.log.info({ userId, role: participant.role }, 'sale de la sala');
     void this.sync();
+  }
+
+  override onDispose(): void {
+    this.session?.dispose();
   }
 
   override onUncaughtException(error: RoomException): void {
@@ -194,15 +144,30 @@ export abstract class MusRoom extends Room<{
     this.log.error({ err: error.cause, method: error.constructor.name }, 'error en la sala');
   }
 
-  /** Se llama una vez, al sentarse todos los humanos. La tarea 4 arranca aquí la partida. */
-  protected onMatchStarted(): void {
-    this.log.info('partida empezada');
+  private registerMessages(): void {
+    this.onMessage(CLIENT_MESSAGES.takeSeat, (client: MusClient, payload: unknown) => {
+      const message = takeSeatSchema.safeParse(payload);
+      if (message.success) this.handleSeat(client, message.data.seat);
+      else this.sendError(client, 'INVALID_MESSAGE');
+    });
+    this.onMessage(CLIENT_MESSAGES.leaveSeat, (client: MusClient) => {
+      this.handleSeat(client, null);
+    });
+    this.onMessage(CLIENT_MESSAGES.action, (client: MusClient, payload: unknown) => {
+      this.handleAction(client, payload);
+    });
+    this.onMessage('*', (client: MusClient) => {
+      this.sendError(client, 'INVALID_MESSAGE');
+    });
   }
 
-  private handleTakeSeat(client: MusClient, seat: Seat): void {
+  /** Sentarse en `seat` o levantarse (`null`), solo en el lobby. */
+  private handleSeat(client: MusClient, seat: Seat | null): void {
     const player = this.player(client);
     if (player === null) return;
-    const error = this.lobby.takeSeat(player.identity.userId, player.identity.nickname, seat);
+    const { userId, nickname } = player.identity;
+    const error =
+      seat === null ? this.lobby.leaveSeat(userId) : this.lobby.takeSeat(userId, nickname, seat);
     if (error !== null) {
       this.sendError(client, error);
       return;
@@ -212,63 +177,55 @@ export abstract class MusRoom extends Room<{
     void this.sync();
   }
 
-  private handleLeaveSeat(client: MusClient): void {
-    const player = this.player(client);
-    if (player === null) return;
-    const error = this.lobby.leaveSeat(player.identity.userId);
-    /* v8 ignore next 4 -- los jugadores solo reciben mensajes de asiento en el lobby. */
-    if (error !== null) {
-      this.sendError(client, error);
+  private handleAction(client: MusClient, payload: unknown): void {
+    const message = gameActionSchema.safeParse(payload);
+    if (!message.success) {
+      this.sendError(client, 'INVALID_MESSAGE');
       return;
     }
-    this.sendYou(client);
-    void this.sync();
+    const player = this.player(client);
+    if (player === null) return;
+    const seat = this.lobby.seatOf(player.identity.userId);
+    const result: ActionResultMessage =
+      this.session === null || seat === null
+        ? { actionId: message.data.actionId, ok: false, code: 'MATCH_NOT_RUNNING' }
+        : this.session.act(seat, message.data);
+    client.send(SERVER_MESSAGES.actionResult, result);
   }
 
   private maybeStart(): void {
     if (!this.lobby.isReady()) return;
-    const error = this.lobby.start(this.botChoice(), this.deps.rng);
+    const error = this.lobby.start(this.options.bots, this.deps.rng);
     /* v8 ignore next -- los personajes se validan al crear la sala. */
     if (error !== null) throw new Error(`No se pudo empezar: ${error}`);
-    this.onMatchStarted();
+    this.session = new TableSession({
+      lobby: this.lobby,
+      scheduler: this.scheduler,
+      rng: this.deps.rng,
+      logger: this.log,
+      timing: { ...DEFAULT_TABLE_TIMING, ...this.deps.timing },
+      recipients: () => this.participants.values().map((p) => this.recipient(p.client)),
+      onStatusChange: () => void this.sync(),
+      onClose: (end) => {
+        this.log.info({ end }, 'mesa cerrada');
+        void this.disconnect();
+      },
+    });
+    this.session.start();
   }
 
-  private botChoice(): BotChoice {
-    return this.options.bots;
-  }
-
-  /** Motivo para no admitir a alguien, o `null`. `ignore` es la sesión que se está uniendo. */
-  private admissionError(userId: string, role: ClientRole, ignore?: string): RoomErrorCode | null {
-    const others = [...this.participants.values()].filter(
-      (p) => p.client.sessionId !== ignore && p.identity.userId !== userId,
-    );
-    if (role === 'spectator') {
-      const spectators = others.filter((p) => p.role === 'spectator').length;
-      return spectators >= MAX_SPECTATORS ? 'SPECTATORS_FULL' : null;
-    }
-    if (this.lobby.seatOf(userId) !== null) return null; // vuelve a su asiento (D7)
-    if (this.lobby.isStarted) return 'NOT_IN_LOBBY';
-    const players = others.filter((p) => p.role === 'player').length;
-    return players >= HUMANS_REQUIRED[this.lobby.mode] ? 'PLAYERS_FULL' : null;
-  }
-
-  /** ¿Ya forma parte de la sala (creador, sentado o conectado)? No necesita el código. */
-  private knows(userId: string): boolean {
-    return (
-      userId === this.creatorUserId ||
-      this.lobby.seatOf(userId) !== null ||
-      [...this.participants.values()].some((p) => p.identity.userId === userId)
-    );
-  }
-
-  /** Si el usuario ya estaba conectado (otra pestaña o una conexión zombi), se cierra la antigua. */
-  private replacePreviousSession(userId: string): void {
-    for (const [sessionId, participant] of this.participants) {
-      if (participant.identity.userId !== userId) continue;
-      this.participants.delete(sessionId);
-      this.superseded.add(sessionId);
-      participant.client.leave(CloseCode.CONSENTED);
-    }
+  /** Destinatario de la partida: su asiento si es jugador sentado; si no, espectador. */
+  private recipient(client: MusClient): Recipient {
+    const participant = this.participants.get(client.sessionId);
+    const seat =
+      participant?.role === 'player' ? this.lobby.seatOf(participant.identity.userId) : null;
+    const viewer: Viewer = seat ?? 'spectator';
+    return {
+      viewer,
+      send: (type, payload) => {
+        client.send(type, payload);
+      },
+    };
   }
 
   private player(client: MusClient): Participant | null {
@@ -285,7 +242,7 @@ export abstract class MusRoom extends Room<{
     const message: YouMessage = {
       role: participant.role,
       seat: this.lobby.seatOf(participant.identity.userId),
-      code: this.code,
+      code: this.admission.code,
     };
     client.send(SERVER_MESSAGES.you, message);
   }
@@ -297,8 +254,8 @@ export abstract class MusRoom extends Room<{
 
   /** Refleja asientos, estado y espectadores en el estado público y en los metadatos. */
   private sync(): Promise<void> {
-    const status: RoomStatus = this.lobby.isStarted ? 'playing' : 'lobby';
-    const spectators = [...this.participants.values()].filter((p) => p.role === 'spectator').length;
+    const status = this.session?.status ?? 'lobby';
+    const spectators = this.participants.spectators();
     this.state.status = status;
     this.state.spectators = spectators;
     this.lobby.occupants.forEach((occupant, seat) => {
@@ -307,26 +264,12 @@ export abstract class MusRoom extends Room<{
     return this.setMetadata({
       mode: this.lobby.mode,
       visibility: this.options.visibility,
-      hasCode: this.code !== null,
+      hasCode: this.admission.code !== null,
       seatsTaken: this.lobby.humansSeated(),
       spectators,
       status,
     });
   }
-}
-
-function seatFields(occupant: SeatOccupant) {
-  return {
-    kind: occupant.kind,
-    nickname:
-      occupant.kind === 'human'
-        ? occupant.nickname
-        : occupant.kind === 'bot'
-          ? occupant.persona.name
-          : '',
-    personaId: occupant.kind === 'bot' ? occupant.persona.id : '',
-    connected: occupant.kind === 'human' ? occupant.connected : occupant.kind === 'bot',
-  };
 }
 
 /** Crea la clase de sala con sus dependencias (Colyseus instancia la clase, sin argumentos). */

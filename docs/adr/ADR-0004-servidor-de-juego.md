@@ -286,7 +286,7 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 1. [x] Antonio acepta este ADR y las decisiones D18–D21 (24/11/2026).
 2. [x] `shared`: esquemas Zod de mensajes y acciones, reacciones y constantes.
 3. [x] `MusRoom`, `server.ts` y lobby: asientos, modos, personajes, sala privada con código.
-4. [ ] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
+4. [x] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
 5. [ ] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
 6. [ ] `MatchLogStore` en memoria y en ficheros.
 7. [ ] Cliente de consola y script de partida completa.
