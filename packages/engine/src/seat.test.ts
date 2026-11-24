@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SEATS, nextSeat, partnerOf } from './seat.js';
+import { SEATS, distanceFromMano, nextSeat, partnerOf, perSeat, seatsFrom } from './seat.js';
 
 describe('nextSeat', () => {
   it('avanza en orden antihorario: (seat + 1) % 4', () => {
@@ -22,5 +22,24 @@ describe('partnerOf', () => {
     expect(partnerOf(2)).toBe(0);
     expect(partnerOf(1)).toBe(3);
     expect(partnerOf(3)).toBe(1);
+  });
+});
+
+describe('seatsFrom y distanceFromMano', () => {
+  it('ordena desde la mano en sentido de juego', () => {
+    expect(seatsFrom(0)).toEqual([0, 1, 2, 3]);
+    expect(seatsFrom(3)).toEqual([3, 0, 1, 2]);
+  });
+
+  it('la mano está a distancia 0 y el postre a 3', () => {
+    for (const mano of SEATS) {
+      seatsFrom(mano).forEach((seat, i) => {
+        expect(distanceFromMano(seat, mano)).toBe(i);
+      });
+    }
+  });
+
+  it('perSeat aplica la función a cada asiento', () => {
+    expect(perSeat((seat) => seat * 10)).toEqual([0, 10, 20, 30]);
   });
 });

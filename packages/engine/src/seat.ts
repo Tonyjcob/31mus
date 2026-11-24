@@ -20,3 +20,23 @@ export function nextSeat(seat: Seat): Seat {
 export function partnerOf(seat: Seat): Seat {
   return PARTNER_SEAT[seat];
 }
+
+/** Un valor por asiento, indexado por `Seat`. */
+export type PerSeat<T> = readonly [T, T, T, T];
+
+/** Crea un `PerSeat` aplicando `fn` a cada asiento. */
+export function perSeat<T>(fn: (seat: Seat) => T): PerSeat<T> {
+  return [fn(0), fn(1), fn(2), fn(3)];
+}
+
+/** Los cuatro asientos en orden de juego empezando por `mano` (mano → 2.º → 3.º → postre). */
+export function seatsFrom(mano: Seat): PerSeat<Seat> {
+  const second = nextSeat(mano);
+  const third = nextSeat(second);
+  return [mano, second, third, nextSeat(third)];
+}
+
+/** Distancia a la mano en orden de juego: 0 para la mano, 3 para el postre (desempates, §2). */
+export function distanceFromMano(seat: Seat, mano: Seat): number {
+  return (seat - mano + SEATS.length) % SEATS.length;
+}
