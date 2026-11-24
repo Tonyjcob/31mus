@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import type { Card } from '../cards.js';
-import { SEATS } from '../seat.js';
+import { SEATS, teamOf } from '../seat.js';
 import type { PerSeat, Seat } from '../seat.js';
 import { card } from '../testing/notation.js';
 import { LANCES, anyJuego, jugadaPoints, lanceWinner } from './lances.js';
@@ -99,7 +99,7 @@ describe('tabla de casos de evaluación', () => {
     const expectedPoints =
       actual === null || lance === 'grande' || lance === 'chica'
         ? null
-        : jugadaPoints(lance, hands, actual);
+        : jugadaPoints(lance, hands, teamOf(actual));
     expect(expectedPoints).toBe(points);
   });
 });

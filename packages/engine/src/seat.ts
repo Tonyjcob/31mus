@@ -49,3 +49,8 @@ export type Team = (typeof TEAMS)[number];
 export function teamOf(seat: Seat): Team {
   return seat % 2 === 0 ? 0 : 1;
 }
+
+/** Los dos asientos de una pareja. */
+export function teamSeats(team: Team): readonly [Seat, Seat] {
+  return team === 0 ? [0, 2] : [1, 3];
+}

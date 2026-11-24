@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { SEATS, distanceFromMano, nextSeat, partnerOf, perSeat, seatsFrom } from './seat.js';
+import {
+  SEATS,
+  distanceFromMano,
+  nextSeat,
+  partnerOf,
+  perSeat,
+  seatsFrom,
+  teamOf,
+  teamSeats,
+} from './seat.js';
 
 describe('nextSeat', () => {
   it('avanza en orden antihorario: (seat + 1) % 4', () => {
@@ -22,6 +31,12 @@ describe('partnerOf', () => {
     expect(partnerOf(2)).toBe(0);
     expect(partnerOf(1)).toBe(3);
     expect(partnerOf(3)).toBe(1);
+  });
+
+  it('teamSeats devuelve los dos asientos de cada pareja', () => {
+    expect(teamSeats(0)).toEqual([0, 2]);
+    expect(teamSeats(1)).toEqual([1, 3]);
+    for (const seat of SEATS) expect(teamSeats(teamOf(seat))).toContain(seat);
   });
 });
 

@@ -4,8 +4,8 @@
  */
 import type { Card } from '../cards.js';
 import { PUNTO_POINTS } from '../rules.js';
-import { SEATS, partnerOf } from '../seat.js';
-import type { PerSeat, Seat } from '../seat.js';
+import { SEATS, teamSeats } from '../seat.js';
+import type { PerSeat, Seat, Team } from '../seat.js';
 import { chicaKey, compareChica, compareGrande, grandeKey } from './grande-chica.js';
 import { compareJuego, comparePunto, handPoints, juegoKey, juegoPoints } from './juego-punto.js';
 import { comparePares, paresKey, paresPoints } from './pares.js';
@@ -73,22 +73,22 @@ export function lanceWinner(lance: Lance, hands: Hands, mano: Seat): Seat | null
 }
 
 /**
- * Tantos de las jugadas de la pareja de `seat` en el recuento, sin envites (§4.3–4.5):
- * pares y juego suman las jugadas de los dos; el punto vale 1; grande y chica, 0.
+ * Tantos de las jugadas de `team` en el recuento, sin envites (§4.3–4.5): pares y juego suman
+ * las jugadas de los dos; el punto vale 1; grande y chica, 0.
  */
-export function jugadaPoints(lance: Lance, hands: Hands, seat: Seat): number {
-  const team = [seat, partnerOf(seat)] as const;
+export function jugadaPoints(lance: Lance, hands: Hands, team: Team): number {
+  const seats = teamSeats(team);
   switch (lance) {
     case 'pares':
       return sum(
-        team.map((s) => {
+        seats.map((s) => {
           const key = paresKey(hands[s]);
           return key === null ? 0 : paresPoints(key);
         }),
       );
     case 'juego':
       return sum(
-        team.map((s) => {
+        seats.map((s) => {
           const key = juegoKey(hands[s]);
           return key === null ? 0 : juegoPoints(key);
         }),

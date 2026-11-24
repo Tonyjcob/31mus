@@ -156,8 +156,8 @@ describe('cierre del juego a 40 (§6)', () => {
     expect(state.hand.lances).toEqual([]);
   });
 
-  it('los tantos no pasan de 40', () => {
-    const { state } = hand({ ...BASE, scores: [35, 0] }, [
+  it('los tantos no pasan de 40, tampoco en el evento', () => {
+    const { state, events } = hand({ ...BASE, scores: [35, 0] }, [
       [0, act.envido(10)],
       [1, act.quiero],
       [3, act.quiero],
@@ -169,5 +169,7 @@ describe('cierre del juego a 40 (§6)', () => {
       [1, act.paso],
     ]);
     expect(state.scores).toEqual([40, 0]);
+    // Se querían 10 de grande, pero solo faltaban 5 para el 40.
+    expect(scored(events)[0]).toEqual(['grande', 0, 5, 'recuento']);
   });
 });

@@ -46,7 +46,7 @@ export interface PlayerView {
   readonly lastDiscardCounts: PerSeat<number> | null;
   readonly declarations: Declarations;
   readonly lances: readonly LanceRecord[];
-  /** Las cuatro manos, solo al terminar la mano y solo para jugadores (D16). */
+  /** Las cuatro manos, solo al terminar la mano; para jugadores y espectadores (D16, D17). */
   readonly revealedHands: PerSeat<readonly Card[]> | null;
 }
 

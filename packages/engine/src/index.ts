@@ -9,6 +9,7 @@ export {
   perSeat,
   seatsFrom,
   teamOf,
+  teamSeats,
 } from './seat.js';
 export type { PerSeat, Seat, Team } from './seat.js';
 export {
