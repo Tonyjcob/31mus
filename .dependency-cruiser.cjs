@@ -9,6 +9,8 @@ const SRC = (name) => `^${name}/src/`;
 const WORKSPACE = '^(apps|packages)/';
 /** Tests y sus helpers (`src/testing/`, fuera del build): pueden usar devDependencies y fs. */
 const TEST_FILES = '(\\.test\\.tsx?$|/src/testing/)';
+/** Herramientas de desarrollo fuera del build (el cliente de consola de `game`): devDependencies sí. */
+const DEV_TOOLS = '/src/cli/';
 
 /** @param {string} from @param {string[]} allowed @param {string} comment */
 function onlyMayDependOn(name, from, allowed, comment) {
@@ -111,9 +113,11 @@ module.exports = {
     },
     {
       name: 'src-sin-devdependencies',
-      comment: 'El código de producción no importa devDependencies (salvo tipos).',
+      comment:
+        'El código de producción no importa devDependencies (salvo tipos). Los tests y las ' +
+        'herramientas de desarrollo (src/cli/, fuera del build) sí pueden.',
       severity: 'error',
-      from: { path: '^(apps|packages)/[^/]+/src/', pathNot: TEST_FILES },
+      from: { path: '^(apps|packages)/[^/]+/src/', pathNot: `${TEST_FILES}|${DEV_TOOLS}` },
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'] },
     },
   ],

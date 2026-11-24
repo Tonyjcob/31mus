@@ -297,6 +297,6 @@ simetría de §4 a cambio de que el log no dependa de que la API esté viva.
 4. [x] `MatchController`: acciones con idempotencia, turno de 30 s, bots, pausa entre manos, fin.
 5. [x] Abandono y reconexión (D7, D20), espectadores (D17), chat y reacciones con límite.
 6. [x] `MatchLogStore` en memoria y en ficheros.
-7. [ ] Cliente de consola y script de partida completa.
+7. [x] Cliente de consola y script de partida completa.
 8. [ ] Tests de §8, fuga de información y cobertura ≥ 90 %.
 9. [ ] Al cerrar H3: `/code-review`, HITOS, `docs/ARQUITECTURA.md` §9 y CLAUDE.md §4/§7.
