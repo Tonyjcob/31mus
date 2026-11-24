@@ -405,6 +405,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@31mus/engine':
+        specifier: workspace:*
+        version: link:../engine
       zod:
         specifier: 4.6.7
         version: 4.6.7
