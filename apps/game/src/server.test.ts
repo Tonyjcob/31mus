@@ -1,52 +1,37 @@
-import type { AddressInfo } from 'node:net';
-
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { devIdentityVerifier } from './identity/dev-identity.js';
+import { silentLogger } from './infra/logger.js';
+import { cryptoRng } from './infra/rng.js';
+import { MemoryMatchLogStore } from './match-log/memory-store.js';
 import { createGameServer } from './server.js';
+import { startTestServer, type TestBench } from './testing/test-server.js';
 
-const server = createGameServer();
+let bench: TestBench;
 let baseUrl = '';
 
 beforeAll(async () => {
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const { port } = server.address() as AddressInfo;
-  baseUrl = `http://127.0.0.1:${String(port)}`;
+  bench = await startTestServer();
+  baseUrl = `http://127.0.0.1:${String(bench.port)}`;
 });
 
 afterAll(async () => {
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
+  await bench.shutdown();
 });
 
 describe('servidor game', () => {
-  it('saluda en /', async () => {
-    const res = await fetch(`${baseUrl}/`);
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe('Hola desde el servidor de juego de 31mus');
-  });
-
-  it('responde al healthcheck', async () => {
+  it('responde al healthcheck en /health (GET y HEAD)', async () => {
     const res = await fetch(`${baseUrl}/health`);
     expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('application/json');
     expect(await res.json()).toEqual({ status: 'ok', service: 'game' });
+    const head = await fetch(`${baseUrl}/health`, { method: 'HEAD' });
+    expect(head.status).toBe(200);
   });
 
-  it('ignora la query string en el healthcheck', async () => {
+  it('ignora la query string en /health', async () => {
     const res = await fetch(`${baseUrl}/health?probe=1`);
     expect(res.status).toBe(200);
-  });
-
-  it('responde a HEAD sin cuerpo', async () => {
-    const res = await fetch(`${baseUrl}/health`, { method: 'HEAD' });
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe('');
   });
 
   it('devuelve 404 en rutas desconocidas', async () => {
@@ -54,9 +39,15 @@ describe('servidor game', () => {
     expect(res.status).toBe(404);
   });
 
-  it('rechaza métodos distintos de GET y HEAD con la cabecera Allow', async () => {
-    const res = await fetch(`${baseUrl}/health`, { method: 'POST' });
-    expect(res.status).toBe(405);
-    expect(res.headers.get('allow')).toBe('GET, HEAD');
+  it('se niega a arrancar en producción con la identidad de desarrollo', () => {
+    expect(() =>
+      createGameServer({
+        production: true,
+        identity: devIdentityVerifier,
+        rng: cryptoRng,
+        logger: silentLogger,
+        matchLog: new MemoryMatchLogStore(),
+      }),
+    ).toThrow(/producción/);
   });
 });

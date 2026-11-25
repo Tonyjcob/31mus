@@ -32,9 +32,14 @@ export const apiEnvSchema = z.object({
 });
 export type ApiEnv = z.output<typeof apiEnvSchema>;
 
+export const NODE_ENVS = ['development', 'test', 'production'] as const;
+export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
+
 export const gameEnvSchema = z.object({
   HOST: hostSchema,
   GAME_PORT: portSchema(DEFAULT_GAME_PORT),
+  NODE_ENV: z.preprocess(emptyAsUndefined, z.enum(NODE_ENVS).default('development')),
+  LOG_LEVEL: z.preprocess(emptyAsUndefined, z.enum(LOG_LEVELS).default('info')),
 });
 export type GameEnv = z.output<typeof gameEnvSchema>;
 
