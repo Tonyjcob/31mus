@@ -155,7 +155,7 @@ para los tests y un retardo "humano" configurable (1–3 s; lo aplica el servido
 - La simulación completa tarda unos 10 minutos y no corre en CI; valorar un trabajo nocturno.
 - Los tests de `bots` tardan ~28 s con cobertura (la muestra de 3.000 partidas).
 
-### 🟡 H3 · Servidor de juego (`apps/game`)
+### ✅ H3 · Servidor de juego (`apps/game`)
 `MusRoom` en Colyseus, con los modos `solo`, `duo_vs_bots` y `2v2`. Asientos, inicio cuando se llenan,
 temporizador de 30 s con `deadline` y bots que sustituyen a quien se va. Reconexión con recuperación
 del asiento, espectadores (máximo 5), chat común y reacciones con rate-limit, salas privadas con
@@ -167,7 +167,7 @@ Diseño en `docs/adr/ADR-0004-servidor-de-juego.md` (aceptado el 24/11/2026).
 - **Test de fuga de información** en verde: ningún mensaje a un cliente o espectador contiene cartas ajenas.
 - Se puede jugar una partida completa con un cliente de pruebas por consola o con un script.
 
-**Notas de cierre (25/11/2026, pendiente de la aprobación de Antonio)**
+**Notas de cierre (25/11/2026, aprobado por Antonio)**
 - DoD verificada:
   - Flujos de §7 con clientes reales del SDK: lobby y asientos, inicio por modo, personajes, sala
     privada con código y límite de intentos, espectadores (≤ 5, vista sin cartas), turno de 30 s con
